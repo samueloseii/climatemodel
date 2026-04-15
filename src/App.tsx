@@ -14,6 +14,9 @@ import BayesianUpdating from "./pages/BayesianUpdating";
 import ReliabilityAnalysis from "./pages/ReliabilityAnalysis";
 import ReportDownload from "./pages/ReportDownload";
 import Settings from "./pages/Settings";
+import Subscription from "./pages/Subscription";
+import PortfolioCompare from "./pages/PortfolioCompare";
+import SensitivityAnalysis from "./pages/SensitivityAnalysis";
 import "./App.css";
 
 function App() {
@@ -37,6 +40,9 @@ function App() {
             <Route path="/reliability" element={<ReliabilityAnalysis />} />
             <Route path="/reports" element={<ReportDownload />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/subscription" element={<Subscription />} />
+            <Route path="/portfolio" element={<PortfolioCompare />} />
+            <Route path="/sensitivity" element={<SensitivityAnalysis />} />
           </Routes>
         </main>
       </div>

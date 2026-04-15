@@ -105,13 +105,85 @@
     @apply text-slate-400 border-slate-700/30 hover:text-slate-200 hover:border-slate-600/40;
   }
   .page-enter {
-    animation: pageEnter 0.3s ease-out;
+    animation: pageEnter 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  .card-enter {
+    animation: cardEnter 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+  }
+  .card-enter-1 { animation-delay: 0.05s; }
+  .card-enter-2 { animation-delay: 0.1s; }
+  .card-enter-3 { animation-delay: 0.15s; }
+  .card-enter-4 { animation-delay: 0.2s; }
+  .shimmer {
+    background: linear-gradient(110deg, transparent 33%, rgba(255,255,255,0.03) 50%, transparent 67%);
+    background-size: 300% 100%;
+    animation: shimmer 2.5s infinite;
+  }
+  .range-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(51,65,85,0.5);
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+  }
+  .range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #2B7BC2;
+    cursor: pointer;
+    border: 2px solid #0f172a;
+    box-shadow: 0 0 6px rgba(43,123,194,0.4);
+  }
+  .range-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #2B7BC2;
+    cursor: pointer;
+    border: 2px solid #0f172a;
+  }
+  .glass-card-glow {
+    background: linear-gradient(145deg, rgba(15,23,42,0.7), rgba(15,23,42,0.5));
+    border: 1px solid var(--border-subtle);
+    border-radius: 0.75rem;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 40px -12px rgba(43,123,194,0.08);
+  }
+  .badge-new {
+    background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05));
+    border: 1px solid rgba(16,185,129,0.25);
+    color: #34d399;
+    font-size: 0.65rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .progress-bar {
+    background: linear-gradient(90deg, #2B7BC2, #6CB4D9);
+    border-radius: 9999px;
+    height: 4px;
+    transition: width 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
   }
 }
 
 @keyframes pageEnter {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 @keyframes subtlePulse {
@@ -119,7 +191,16 @@
   50% { opacity: 0.7; }
 }
 
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .animate-subtle-pulse {
   animation: subtlePulse 3s ease-in-out infinite;
+}
+
+.animate-count-up {
+  animation: countUp 0.5s ease-out;
 }
 

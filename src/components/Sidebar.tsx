@@ -14,26 +14,32 @@ import {
   FlaskConical,
   Wrench,
   FileDown,
+  Layers,
+  CreditCard,
+  Sliders,
 } from "lucide-react";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard", section: "Overview" },
   { to: "/monte-carlo", icon: Activity, label: "Monte Carlo", section: "Analysis" },
   { to: "/risk-analysis", icon: Shield, label: "Risk Analysis", section: "Analysis" },
+  { to: "/sensitivity", icon: Sliders, label: "Sensitivity", section: "Analysis" },
   { to: "/expected-utility", icon: Brain, label: "Expected Utility", section: "Analysis" },
   { to: "/decision-theory", icon: Swords, label: "Decision Theory", section: "Analysis" },
   { to: "/voi-analysis", icon: Eye, label: "Value of Info", section: "Decision Science" },
   { to: "/bayesian", icon: FlaskConical, label: "Bayesian Updating", section: "Decision Science" },
   { to: "/reliability", icon: Wrench, label: "Reliability", section: "Decision Science" },
+  { to: "/portfolio", icon: Layers, label: "Portfolio Compare", section: "Forecasting" },
   { to: "/predictions", icon: TrendingUp, label: "Predictions", section: "Forecasting" },
   { to: "/geological", icon: Mountain, label: "Geological", section: "Forecasting" },
   { to: "/projects", icon: FolderOpen, label: "Projects", section: "Management" },
   { to: "/financing", icon: DollarSign, label: "Financing", section: "Management" },
   { to: "/reports", icon: FileDown, label: "Reports", section: "Management" },
   { to: "/settings", icon: Settings, label: "Settings", section: "Management" },
+  { to: "/subscription", icon: CreditCard, label: "Pricing", section: "Account" },
 ];
 
-const sections = ["Overview", "Analysis", "Decision Science", "Forecasting", "Management"];
+const sections = ["Overview", "Analysis", "Decision Science", "Forecasting", "Management", "Account"];
 
 export default function Sidebar() {
   return (
@@ -74,7 +80,7 @@ export default function Sidebar() {
       <div className="p-3 mt-auto">
         <div className="rounded-lg p-3" style={{ background: "rgba(43,123,194,0.06)", border: "1px solid rgba(43,123,194,0.15)" }}>
           <p className="text-xs font-medium mb-0.5" style={{ color: "#E8652D" }}>Analytics Engine</p>
-          <p className="text-xs text-slate-500 leading-relaxed">v3.0 &middot; 14 modules active</p>
+          <p className="text-xs text-slate-500 leading-relaxed">v3.0 &middot; 16 modules active</p>
         </div>
       </div>
     </aside>

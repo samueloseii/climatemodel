@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Play, RotateCcw, Download, Activity, Plus, Trash2, Info } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
+import { Play, RotateCcw, Download, Activity, Plus, Trash2, Info, Upload, Check, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LineChart, Line, Legend } from "recharts";
 import { defaultParams, runMonteCarloSimulation, computeMean, computeStd, computePercentile, computeVaR, computeCVaR, buildHistogram } from "../data/simulationEngine";
 import type { SimulationParams, SimulationResult } from "../data/simulationEngine";
@@ -19,6 +19,40 @@ export default function MonteCarlo() {
   const [projectLife, setProjectLife] = useState(25);
   const [customParams, setCustomParams] = useState<CustomParam[]>([]);
   const [outputMetric, setOutputMetric] = useState<"npv" | "irr" | "payback" | "convergence">("npv");
+  const [csvStatus, setCsvStatus] = useState<"idle" | "success" | "error">("idle");
+  const [csvFile, setCsvFile] = useState<string>("");
+  const csvRef = useRef<HTMLInputElement>(null);
+
+  const handleCSVUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result as string;
+        const lines = text.trim().split("\n");
+        if (lines.length < 2) { setCsvStatus("error"); return; }
+        const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+        const meanIdx = headers.indexOf("mean");
+        const stdIdx = headers.indexOf("std") !== -1 ? headers.indexOf("std") : headers.indexOf("std_dev");
+        const nameIdx = headers.indexOf("variable") !== -1 ? headers.indexOf("variable") : headers.indexOf("name");
+        if (meanIdx === -1 || stdIdx === -1) { setCsvStatus("error"); return; }
+        const newCustom: CustomParam[] = [];
+        for (let i = 1; i < lines.length; i++) {
+          const vals = lines[i].split(",").map(v => v.trim());
+          if (vals.length <= Math.max(meanIdx, stdIdx)) continue;
+          newCustom.push({
+            id: Date.now().toString() + i,
+            label: nameIdx >= 0 ? vals[nameIdx] : `Imported ${i}`,
+            mean: parseFloat(vals[meanIdx]) || 0,
+            std: parseFloat(vals[stdIdx]) || 0,
+          });
+        }
+        setCustomParams(prev => [...prev, ...newCustom]);
+        setCsvFile(file.name);
+        setCsvStatus("success");
+      } catch { setCsvStatus("error"); }
+    };
+    reader.readAsText(file);
+  };
 
   const runSim = () => {
     setRunning(true);
@@ -132,12 +166,24 @@ export default function MonteCarlo() {
           <input type="number" min={0} max={50} value={30} className="input-dark w-16 text-xs text-center py-1.5" readOnly />
           <span className="text-xs text-slate-500">%</span>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <input ref={csvRef} type="file" accept=".csv" className="hidden" onChange={e => e.target.files?.[0] && handleCSVUpload(e.target.files[0])} />
+          <button onClick={() => csvRef.current?.click()} className="btn-secondary flex items-center gap-1.5 text-xs py-1.5">
+            <Upload size={12} /> Import CSV
+          </button>
           <button onClick={addCustomParam} className="btn-secondary flex items-center gap-1.5 text-xs py-1.5">
             <Plus size={12} /> Add Variable
           </button>
         </div>
       </div>
+
+      {/* CSV Upload Status */}
+      {csvStatus !== "idle" && (
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs ${csvStatus === "success" ? "text-emerald-400" : "text-red-400"}`} style={{ background: csvStatus === "success" ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", border: `1px solid ${csvStatus === "success" ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)"}` }}>
+          {csvStatus === "success" ? <Check size={12} /> : <AlertTriangle size={12} />}
+          {csvStatus === "success" ? `${csvFile} imported successfully` : "CSV must have 'mean' and 'std' columns"}
+        </div>
+      )}
 
       {/* Parameters */}
       <div className="glass-card p-5">
