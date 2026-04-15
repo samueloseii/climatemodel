@@ -1,31 +1,33 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
-import NewProject from "./pages/NewProject";
+import MonteCarlo from "./pages/MonteCarlo";
+import RiskAnalysis from "./pages/RiskAnalysis";
+import ExpectedUtility from "./pages/ExpectedUtility";
+import DecisionTheory from "./pages/DecisionTheory";
+import Predictions from "./pages/Predictions";
+import Geological from "./pages/Geological";
 import Projects from "./pages/Projects";
-import DataRepository from "./pages/DataRepository";
 import Financing from "./pages/Financing";
-import Communications from "./pages/Communications";
-import Reports from "./pages/Reports";
-import Architecture from "./pages/Architecture";
 import Settings from "./pages/Settings";
 import "./App.css";
 
 function App() {
   return (
     <BrowserRouter>
-      <div className="flex min-h-screen bg-slate-50">
+      <div className="flex min-h-screen" style={{ background: "#0a0e1a" }}>
         <Sidebar />
         <main className="flex-1 p-8 overflow-auto">
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/new-project" element={<NewProject />} />
+            <Route path="/monte-carlo" element={<MonteCarlo />} />
+            <Route path="/risk-analysis" element={<RiskAnalysis />} />
+            <Route path="/expected-utility" element={<ExpectedUtility />} />
+            <Route path="/decision-theory" element={<DecisionTheory />} />
+            <Route path="/predictions" element={<Predictions />} />
+            <Route path="/geological" element={<Geological />} />
             <Route path="/projects" element={<Projects />} />
-            <Route path="/data" element={<DataRepository />} />
             <Route path="/financing" element={<Financing />} />
-            <Route path="/communications" element={<Communications />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/architecture" element={<Architecture />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
