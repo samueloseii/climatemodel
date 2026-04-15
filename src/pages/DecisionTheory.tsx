@@ -30,12 +30,14 @@ const defaultOptions: DecisionOption[] = [
   ]},
 ];
 
-type Criterion = "minimax" | "maximin" | "maximax" | "hurwicz";
+type Criterion = "minimax" | "maximin" | "maximax" | "hurwicz" | "lookahead";
 
 export default function DecisionTheory() {
   const [options, setOptions] = useState<DecisionOption[]>(defaultOptions);
   const [alpha, setAlpha] = useState(0.6);
   const [activeCriterion, setActiveCriterion] = useState<Criterion>("minimax");
+  const [explorationBudget, setExplorationBudget] = useState(150000);
+  const [surveyAccuracy, setSurveyAccuracy] = useState(0.75);
 
   const regret = useMemo(() => minimaxRegret(options), [options]);
   const maximinResult = useMemo(() => maximin(options), [options]);
@@ -70,11 +72,50 @@ export default function DecisionTheory() {
     setOptions(prev => prev.map(opt => ({ ...opt, outcomes: opt.outcomes.filter((_, j) => j !== si) })));
   };
 
+  // Lookahead analysis: myopic vs lookahead value comparison
+  const lookaheadData = useMemo(() => {
+    // For each option, compute:
+    // Myopic: pick the best option now without exploration
+    // Lookahead: invest in exploration, then pick with better info
+    const stateProbs = states.map(() => 1 / states.length);
+    const myopicValues = options.map(opt => {
+      return opt.outcomes.reduce((s, o, i) => s + o.value * stateProbs[i], 0);
+    });
+    const bestMyopicIdx = myopicValues.indexOf(Math.max(...myopicValues));
+    const bestMyopic = myopicValues[bestMyopicIdx];
+
+    // With survey: posterior-updated decisions
+    const lookaheadValues = options.map(_opt => {
+      // Expected value after survey with given accuracy
+      let evWithSurvey = 0;
+      for (let si = 0; si < states.length; si++) {
+        // P(signal_correct | state_si) = surveyAccuracy
+        // Posterior: better estimate of which state we're in
+        const posteriorProbs = states.map((_, sj) => {
+          if (si === sj) return surveyAccuracy;
+          return (1 - surveyAccuracy) / (states.length - 1);
+        });
+        // Best action given posterior
+        const actionValues = options.map(a => a.outcomes.reduce((s, o, j) => s + o.value * posteriorProbs[j], 0));
+        evWithSurvey += stateProbs[si] * Math.max(...actionValues);
+      }
+      return evWithSurvey;
+    });
+    const bestLookahead = Math.max(...lookaheadValues);
+
+    return {
+      myopic: { value: bestMyopic, option: options[bestMyopicIdx]?.name || "" },
+      lookahead: { value: bestLookahead - explorationBudget, netGain: bestLookahead - explorationBudget - bestMyopic },
+      options: options.map((opt, i) => ({ name: opt.name, myopic: myopicValues[i], lookahead: lookaheadValues[i] - explorationBudget })),
+    };
+  }, [options, states, explorationBudget, surveyAccuracy]);
+
   const criteria = [
     { key: "minimax" as const, label: "Minimax Regret", color: "#6CB4D9", twColor: "text-cyan-400", bg: "bg-cyan-500/10 border-cyan-500/25" },
     { key: "maximin" as const, label: "Maximin", color: "#2B7BC2", twColor: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/25" },
     { key: "maximax" as const, label: "Maximax", color: "#10b981", twColor: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/25" },
     { key: "hurwicz" as const, label: "Hurwicz", color: "#E8652D", twColor: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/25" },
+    { key: "lookahead" as const, label: "Lookahead", color: "#a855f7", twColor: "text-violet-400", bg: "bg-violet-500/10 border-violet-500/25" },
   ];
 
   const renderResults = () => {
@@ -119,6 +160,23 @@ export default function DecisionTheory() {
             <div className="flex items-center gap-3">
               <span className={`text-sm font-semibold tabular-nums ${r.value >= 0 ? "text-emerald-400" : "text-red-400"}`}>{fmt(r.value)}</span>
               {r.option === r.bestOption && <span className="text-xs bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded">Best</span>}
+            </div>
+          </div>
+        ));
+      case "lookahead":
+        return lookaheadData.options.map(r => (
+          <div key={r.name} className={`flex items-center justify-between px-4 py-2.5 rounded-lg border ${r.lookahead >= r.myopic ? "bg-violet-500/8 border-violet-500/25" : "border-slate-700/30"}`}>
+            <span className="text-sm text-slate-300">{r.name}</span>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <span className="text-xs text-slate-500 block">Myopic</span>
+                <span className={`text-sm font-semibold tabular-nums ${r.myopic >= 0 ? "text-emerald-400" : "text-red-400"}`}>{fmt(r.myopic)}</span>
+              </div>
+              <div className="text-right">
+                <span className="text-xs text-slate-500 block">Lookahead</span>
+                <span className={`text-sm font-semibold tabular-nums ${r.lookahead >= 0 ? "text-violet-400" : "text-red-400"}`}>{fmt(r.lookahead)}</span>
+              </div>
+              {r.lookahead > r.myopic && <span className="text-xs bg-violet-500/15 text-violet-400 px-2 py-0.5 rounded">Explore</span>}
             </div>
           </div>
         ));
@@ -207,6 +265,38 @@ export default function DecisionTheory() {
             <span className="text-xs text-slate-400">Optimism (alpha):</span>
             <input type="range" min={0} max={1} step={0.05} value={alpha} onChange={e => setAlpha(Number(e.target.value))} className="flex-1 accent-blue-500" />
             <span className="text-sm text-amber-400 font-semibold tabular-nums w-10">{alpha.toFixed(2)}</span>
+          </div>
+        )}
+        {activeCriterion === "lookahead" && (
+          <div className="mb-4 p-3 rounded-lg space-y-3" style={{ background: "rgba(168,85,247,0.05)", border: "1px solid rgba(168,85,247,0.15)" }}>
+            <p className="text-xs text-slate-400 leading-relaxed">Lookahead compares <strong className="text-white">myopic</strong> (decide now) vs <strong className="text-white">lookahead</strong> (explore first, then decide with better info). From CEE551 L11: Exploitation vs Exploration.</p>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400">Exploration Budget:</span>
+                <input type="number" step={10000} value={explorationBudget} onChange={e => setExplorationBudget(Number(e.target.value))} className="input-dark w-28 text-xs text-center py-1.5" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400">Survey Accuracy:</span>
+                <input type="range" min={0.5} max={0.99} step={0.01} value={surveyAccuracy} onChange={e => setSurveyAccuracy(Number(e.target.value))} className="w-32 accent-violet-500" />
+                <span className="text-sm text-violet-400 font-semibold tabular-nums w-10">{(surveyAccuracy * 100).toFixed(0)}%</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 mt-2">
+              <div className="text-center p-2 rounded-lg" style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.15)" }}>
+                <p className="text-xs text-slate-400">Myopic Best</p>
+                <p className="text-sm font-bold" style={{ color: "#a855f7" }}>{fmt(lookaheadData.myopic.value)}</p>
+                <p className="text-xs text-slate-500">{lookaheadData.myopic.option}</p>
+              </div>
+              <div className="text-center p-2 rounded-lg" style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.15)" }}>
+                <p className="text-xs text-slate-400">Lookahead Net</p>
+                <p className="text-sm font-bold" style={{ color: lookaheadData.lookahead.value >= lookaheadData.myopic.value ? "#a855f7" : "#ef4444" }}>{fmt(lookaheadData.lookahead.value)}</p>
+              </div>
+              <div className="text-center p-2 rounded-lg" style={{ background: lookaheadData.lookahead.netGain > 0 ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)", border: `1px solid ${lookaheadData.lookahead.netGain > 0 ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)"}` }}>
+                <p className="text-xs text-slate-400">Net Gain from Exploring</p>
+                <p className={`text-sm font-bold ${lookaheadData.lookahead.netGain > 0 ? "text-emerald-400" : "text-red-400"}`}>{fmt(lookaheadData.lookahead.netGain)}</p>
+                <p className="text-xs text-slate-500">{lookaheadData.lookahead.netGain > 0 ? "Explore first" : "Decide now"}</p>
+              </div>
+            </div>
           </div>
         )}
         <div className="space-y-1.5">

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
-import { Play, RotateCcw, Download, Activity, Plus, Trash2 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { Play, RotateCcw, Download, Activity, Plus, Trash2, Info } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LineChart, Line, Legend } from "recharts";
 import { defaultParams, runMonteCarloSimulation, computeMean, computeStd, computePercentile, computeVaR, computeCVaR, buildHistogram } from "../data/simulationEngine";
 import type { SimulationParams, SimulationResult } from "../data/simulationEngine";
 
@@ -18,7 +18,7 @@ export default function MonteCarlo() {
   const [params, setParams] = useState<SimulationParams>(defaultParams);
   const [projectLife, setProjectLife] = useState(25);
   const [customParams, setCustomParams] = useState<CustomParam[]>([]);
-  const [outputMetric, setOutputMetric] = useState<"npv" | "irr" | "payback">("npv");
+  const [outputMetric, setOutputMetric] = useState<"npv" | "irr" | "payback" | "convergence">("npv");
 
   const runSim = () => {
     setRunning(true);
@@ -64,10 +64,33 @@ export default function MonteCarlo() {
 
   const fmt = (v: number) => v >= 0 ? `$${(v/1000).toFixed(0)}K` : `-$${(Math.abs(v)/1000).toFixed(0)}K`;
 
+  // Convergence diagnostics: running mean of NPV as trials accumulate
+  const convergenceData = useMemo(() => {
+    if (!npvValues.length) return [];
+    const step = Math.max(1, Math.floor(npvValues.length / 100));
+    const data: { trial: number; runningMean: number; runningStd: number; upper95: number; lower95: number }[] = [];
+    let sum = 0;
+    let sumSq = 0;
+    for (let i = 0; i < npvValues.length; i++) {
+      sum += npvValues[i];
+      sumSq += npvValues[i] * npvValues[i];
+      if ((i + 1) % step === 0 || i === npvValues.length - 1) {
+        const n = i + 1;
+        const mean = sum / n;
+        const variance = n > 1 ? (sumSq / n - mean * mean) : 0;
+        const std = Math.sqrt(variance);
+        const se = std / Math.sqrt(n);
+        data.push({ trial: n, runningMean: Math.round(mean), runningStd: Math.round(std), upper95: Math.round(mean + 1.96 * se), lower95: Math.round(mean - 1.96 * se) });
+      }
+    }
+    return data;
+  }, [npvValues]);
+
   const metricTabs = [
     { key: "npv" as const, label: "NPV Distribution" },
     { key: "irr" as const, label: "IRR Analysis" },
     { key: "payback" as const, label: "Payback Period" },
+    { key: "convergence" as const, label: "Convergence" },
   ];
 
   return (
@@ -274,6 +297,47 @@ export default function MonteCarlo() {
                 <div className="text-center p-4 rounded-lg" style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)" }}>
                   <p className="text-xs text-slate-400 mb-1">P(Payback &lt; 10yr)</p>
                   <p className="text-3xl font-bold text-blue-400 tabular-nums">{(paybackValues.filter(v => v < 10).length / paybackValues.length * 100).toFixed(0)}%</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {outputMetric === "convergence" && convergenceData.length > 0 && (
+            <div className="glass-card p-5">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-sm font-semibold text-white">Convergence Diagnostics</h3>
+                <div className="group relative">
+                  <Info size={13} className="text-slate-500 cursor-help" />
+                  <div className="absolute bottom-full left-0 mb-2 w-72 p-3 rounded-lg text-xs text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50" style={{ background: "#1e293b", border: "1px solid #334155" }}>
+                    Shows how the running mean NPV stabilizes as more trials are added. The 95% confidence interval (shaded) should narrow, indicating the estimate is converging. From CEE551 L14: Simulation.
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 mb-4">Running mean NPV with 95% confidence interval &mdash; convergence indicates sufficient trials</p>
+              <ResponsiveContainer width="100%" height={320}>
+                <LineChart data={convergenceData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="trial" tick={{ fontSize: 10, fill: "#64748b" }} label={{ value: "Number of Trials", position: "insideBottom", offset: -5, fontSize: 11, fill: "#64748b" }} />
+                  <YAxis tick={{ fontSize: 10, fill: "#64748b" }} tickFormatter={(v: number) => `$${(v/1000).toFixed(0)}K`} />
+                  <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid #334155", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "#e2e8f0" }} formatter={(value: number) => [`$${(value/1000).toFixed(1)}K`, undefined]} labelFormatter={(label: number) => `Trial ${label.toLocaleString()}`} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Line type="monotone" dataKey="upper95" stroke="#6CB4D9" strokeDasharray="4 4" dot={false} name="Upper 95% CI" strokeWidth={1} />
+                  <Line type="monotone" dataKey="runningMean" stroke="#2B7BC2" dot={false} name="Running Mean NPV" strokeWidth={2} />
+                  <Line type="monotone" dataKey="lower95" stroke="#6CB4D9" strokeDasharray="4 4" dot={false} name="Lower 95% CI" strokeWidth={1} />
+                </LineChart>
+              </ResponsiveContainer>
+              <div className="mt-3 grid grid-cols-3 gap-3">
+                <div className="text-center p-2 rounded-lg" style={{ background: "rgba(43,123,194,0.08)", border: "1px solid rgba(43,123,194,0.15)" }}>
+                  <p className="text-xs text-slate-400">Final Mean</p>
+                  <p className="text-sm font-bold" style={{ color: "#2B7BC2" }}>{fmt(convergenceData[convergenceData.length-1]?.runningMean || 0)}</p>
+                </div>
+                <div className="text-center p-2 rounded-lg" style={{ background: "rgba(108,180,217,0.08)", border: "1px solid rgba(108,180,217,0.15)" }}>
+                  <p className="text-xs text-slate-400">95% CI Width</p>
+                  <p className="text-sm font-bold" style={{ color: "#6CB4D9" }}>{fmt((convergenceData[convergenceData.length-1]?.upper95 || 0) - (convergenceData[convergenceData.length-1]?.lower95 || 0))}</p>
+                </div>
+                <div className="text-center p-2 rounded-lg" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                  <p className="text-xs text-slate-400">Converged</p>
+                  <p className="text-sm font-bold text-emerald-400">{convergenceData.length > 10 && Math.abs((convergenceData[convergenceData.length-1]?.runningMean || 0) - (convergenceData[Math.floor(convergenceData.length * 0.8)]?.runningMean || 0)) < Math.abs((convergenceData[convergenceData.length-1]?.runningMean || 1)) * 0.02 ? "Yes" : "No — increase trials"}</p>
                 </div>
               </div>
             </div>
