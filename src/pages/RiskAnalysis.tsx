@@ -1,7 +1,28 @@
-import { useState, useMemo } from "react";
-import { Play, Shield, AlertTriangle, Info } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Play, Shield, AlertTriangle, Info, ArrowRight } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { defaultParams, runMonteCarloSimulation, computeMean, computeVaR, computeCVaR, computePercentile, runSensitivityAnalysis } from "../data/simulationEngine";
+import { useProject, ProjectSelector } from "../data/ProjectContext";
+import { useNavigate } from "react-router-dom";
+import type { SimulationParams } from "../data/simulationEngine";
+
+function projectToParams(p: { drillingCostPerFt: number; boreDepth: number; numWells: number; annualRevenue: number; opexPerYear: number; energyEscalation: number; discountRate: number; carbonCreditsPerYear: number; projectLife: number }): SimulationParams {
+  return {
+    drillingCostPerFt: { mean: p.drillingCostPerFt, std: p.drillingCostPerFt * 0.15 },
+    boreDepth: { mean: p.boreDepth, std: p.boreDepth * 0.1 },
+    numBores: p.numWells,
+    heatPumpCost: { mean: 35000, std: 5000 },
+    distributionCost: { mean: 15000, std: 3000 },
+    laborCost: { mean: 20000, std: 4000 },
+    annualEnergyCost: { mean: p.annualRevenue, std: p.annualRevenue * 0.12 },
+    savingsPercent: { mean: 55, std: 8 },
+    energyEscalation: { mean: p.energyEscalation, std: 1.2 },
+    discountRate: { mean: p.discountRate, std: 1.5 },
+    projectLifeYears: p.projectLife,
+    itcRate: 0.30,
+    carbonCreditsPerYear: { mean: p.carbonCreditsPerYear, std: p.carbonCreditsPerYear * 0.2 },
+  };
+}
 
 // Extreme Value Analysis: GPD tail estimation
 function fitGPD(tailLosses: number[]): { xi: number; sigma: number } {
@@ -22,15 +43,26 @@ function gpdQuantile(p: number, xi: number, sigma: number, threshold: number): n
 }
 
 export default function RiskAnalysis() {
+  const navigate = useNavigate();
+  const { selectedProject } = useProject();
   const [results, setResults] = useState<ReturnType<typeof runMonteCarloSimulation> | null>(null);
   const [running, setRunning] = useState(false);
   const [confidence, setConfidence] = useState(0.95);
-  const [tailThresholdPct, setTailThresholdPct] = useState(10); // % of data in tail
+  const [tailThresholdPct, setTailThresholdPct] = useState(10);
+  const [simParams, setSimParams] = useState<SimulationParams>(() => selectedProject ? projectToParams(selectedProject) : defaultParams);
+
+  useEffect(() => {
+    if (selectedProject) {
+      const newP = projectToParams(selectedProject);
+      setSimParams(newP);
+      setResults(null);
+    }
+  }, [selectedProject]);
 
   const runAnalysis = () => {
     setRunning(true);
     setTimeout(() => {
-      setResults(runMonteCarloSimulation(defaultParams, 10000));
+      setResults(runMonteCarloSimulation(simParams, 10000));
       setRunning(false);
     }, 100);
   };
@@ -38,7 +70,7 @@ export default function RiskAnalysis() {
   const npvValues = useMemo(() => results?.map(r => r.npv) ?? [], [results]);
   const var_val = useMemo(() => npvValues.length ? computeVaR(npvValues, confidence) : 0, [npvValues, confidence]);
   const cvar_val = useMemo(() => npvValues.length ? computeCVaR(npvValues, confidence) : 0, [npvValues, confidence]);
-  const sensitivity = useMemo(() => runSensitivityAnalysis(defaultParams), []);
+  const sensitivity = useMemo(() => runSensitivityAnalysis(simParams), [simParams]);
 
   // Extreme Value / GPD tail analysis
   const extremeValueData = useMemo(() => {
@@ -86,11 +118,14 @@ export default function RiskAnalysis() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Risk <span className="gradient-text">Analysis</span></h1>
-          <p className="text-slate-400 mt-1">VaR, CVaR, and sensitivity analysis for geothermal project risk quantification</p>
+          <p className="text-slate-400 mt-1">{selectedProject ? `VaR/CVaR risk quantification for ${selectedProject.name} (${selectedProject.capacity_MW} MW)` : "VaR, CVaR, and sensitivity analysis for geothermal project risk quantification"}</p>
         </div>
-        <button onClick={runAnalysis} disabled={running} className="btn-primary flex items-center gap-2">
-          <Play size={16} /> {running ? "Analyzing..." : "Run Risk Analysis"}
-        </button>
+        <div className="flex items-center gap-3">
+          <ProjectSelector />
+          <button onClick={runAnalysis} disabled={running} className="btn-primary flex items-center gap-2">
+            <Play size={16} /> {running ? "Analyzing..." : "Run Risk Analysis"}
+          </button>
+        </div>
       </div>
 
       {/* Sensitivity Tornado */}
@@ -259,6 +294,12 @@ export default function RiskAnalysis() {
           <p className="text-sm text-slate-500 mt-2">10,000 simulations will be run to quantify downside risk for lenders and investors</p>
         </div>
       )}
+
+      {/* Workflow Navigation */}
+      <div className="flex items-center justify-between glass-card p-4">
+        <button onClick={() => navigate("/monte-carlo")} className="btn-secondary text-xs">Back: Monte Carlo</button>
+        <button onClick={() => navigate("/financing")} className="btn-primary flex items-center gap-1.5 text-xs">Next: Financing <ArrowRight size={14} /></button>
+      </div>
     </div>
   );
 }

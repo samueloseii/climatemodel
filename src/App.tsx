@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
+import { ProjectProvider } from "./data/ProjectContext";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import MonteCarlo from "./pages/MonteCarlo";
@@ -22,7 +23,8 @@ import "./App.css";
 
 function App() {
   return (
-    <BrowserRouter>
+    <ProjectProvider>
+    <HashRouter>
       <div className="flex min-h-screen" style={{ background: "#0a0e1a" }}>
         <Sidebar />
         <main className="flex-1 p-8 overflow-auto">
@@ -48,7 +50,8 @@ function App() {
           </Routes>
         </main>
       </div>
-    </BrowserRouter>
+    </HashRouter>
+    </ProjectProvider>
   );
 }
 

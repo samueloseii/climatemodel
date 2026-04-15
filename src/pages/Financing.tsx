@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
-import { DollarSign, Leaf, Brain, CheckCircle, XCircle, AlertTriangle, ChevronDown, ChevronUp, Zap, BarChart3, Target } from "lucide-react";
+import { DollarSign, Leaf, Brain, CheckCircle, XCircle, AlertTriangle, ChevronDown, ChevronUp, Zap, BarChart3, Target, ArrowRight } from "lucide-react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { loadProjects, type GeoProject } from "../data/projectStore";
 import { analyzeFinancing, generateProjectInsights, projectCarbonRevenue, type FinancingAnalysis, type AIInsight } from "../data/aiInsights";
+import { useProject, ProjectSelector } from "../data/ProjectContext";
+import { useNavigate } from "react-router-dom";
 
 function fmt(v: number): string {
   if (Math.abs(v) >= 1e9) return "$" + (v / 1e9).toFixed(2) + "B";
@@ -15,13 +16,11 @@ const insightIcons: Record<string, typeof CheckCircle> = { recommendation: Check
 const insightColors: Record<string, string> = { recommendation: "#10b981", warning: "#f59e0b", opportunity: "#6CB4D9", risk: "#ef4444" };
 
 export default function Financing() {
-  const projects = useMemo(() => loadProjects(), []);
-  const [selectedId, setSelectedId] = useState(projects[0]?.id || "");
+  const navigate = useNavigate();
+  const { selectedProject: project } = useProject();
   const [expandedOpt, setExpandedOpt] = useState<string | null>(null);
   const [carbonBasePrice, setCarbonBasePrice] = useState(30);
   const [carbonEscalation, setCarbonEscalation] = useState(5);
-
-  const project: GeoProject | undefined = projects.find(p => p.id === selectedId) || projects[0];
 
   const analysis: FinancingAnalysis | null = useMemo(() => {
     if (!project) return null;
@@ -50,9 +49,7 @@ export default function Financing() {
           <h1 className="text-3xl font-bold text-white">Financing &amp; <span className="gradient-text">ROI Analysis</span></h1>
           <p className="text-slate-400 mt-1">Dynamic financing optimization, carbon revenue projections, and AI-powered recommendations</p>
         </div>
-        <select className="select-dark min-w-[220px]" value={selectedId} onChange={e => setSelectedId(e.target.value)}>
-          {projects.map(p => <option key={p.id} value={p.id}>{p.name} ({p.country})</option>)}
-        </select>
+        <ProjectSelector />
       </div>
 
       {/* Viability Banner */}
@@ -314,6 +311,12 @@ export default function Financing() {
             <p className="text-xs text-emerald-400 mt-2">52% effective CapEx reduction</p>
           </div>
         </div>
+      </div>
+
+      {/* Workflow Navigation */}
+      <div className="flex items-center justify-between glass-card p-4">
+        <button onClick={() => navigate("/risk-analysis")} className="btn-secondary text-xs">Back: Risk Analysis</button>
+        <button onClick={() => navigate("/reports")} className="btn-primary flex items-center gap-1.5 text-xs">Next: Generate Report <ArrowRight size={14} /></button>
       </div>
     </div>
   );

@@ -1,8 +1,10 @@
-import { useState, useMemo, useRef } from "react";
-import { Play, RotateCcw, Download, Activity, Plus, Trash2, Info, Upload, Check, AlertTriangle } from "lucide-react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { Play, RotateCcw, Download, Activity, Plus, Trash2, Info, Upload, Check, AlertTriangle, ArrowRight } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LineChart, Line, Legend } from "recharts";
 import { defaultParams, runMonteCarloSimulation, computeMean, computeStd, computePercentile, computeVaR, computeCVaR, buildHistogram } from "../data/simulationEngine";
 import type { SimulationParams, SimulationResult } from "../data/simulationEngine";
+import { useProject, ProjectSelector } from "../data/ProjectContext";
+import { useNavigate } from "react-router-dom";
 
 interface CustomParam {
   id: string;
@@ -11,12 +13,40 @@ interface CustomParam {
   std: number;
 }
 
+function projectToParams(p: { drillingCostPerFt: number; boreDepth: number; numWells: number; annualRevenue: number; opexPerYear: number; energyEscalation: number; discountRate: number; carbonCreditsPerYear: number; projectLife: number }): SimulationParams {
+  return {
+    drillingCostPerFt: { mean: p.drillingCostPerFt, std: p.drillingCostPerFt * 0.15 },
+    boreDepth: { mean: p.boreDepth, std: p.boreDepth * 0.1 },
+    numBores: p.numWells,
+    heatPumpCost: { mean: 35000, std: 5000 },
+    distributionCost: { mean: 15000, std: 3000 },
+    laborCost: { mean: 20000, std: 4000 },
+    annualEnergyCost: { mean: p.annualRevenue, std: p.annualRevenue * 0.12 },
+    savingsPercent: { mean: 55, std: 8 },
+    energyEscalation: { mean: p.energyEscalation, std: 1.2 },
+    discountRate: { mean: p.discountRate, std: 1.5 },
+    projectLifeYears: p.projectLife,
+    itcRate: 0.30,
+    carbonCreditsPerYear: { mean: p.carbonCreditsPerYear, std: p.carbonCreditsPerYear * 0.2 },
+  };
+}
+
 export default function MonteCarlo() {
+  const navigate = useNavigate();
+  const { selectedProject } = useProject();
   const [numTrials, setNumTrials] = useState(5000);
   const [results, setResults] = useState<SimulationResult[] | null>(null);
   const [running, setRunning] = useState(false);
-  const [params, setParams] = useState<SimulationParams>(defaultParams);
-  const [projectLife, setProjectLife] = useState(25);
+  const [params, setParams] = useState<SimulationParams>(() => selectedProject ? projectToParams(selectedProject) : defaultParams);
+  const [projectLife, setProjectLife] = useState(() => selectedProject?.projectLife ?? 25);
+
+  useEffect(() => {
+    if (selectedProject) {
+      setParams(projectToParams(selectedProject));
+      setProjectLife(selectedProject.projectLife);
+      setResults(null);
+    }
+  }, [selectedProject]);
   const [customParams, setCustomParams] = useState<CustomParam[]>([]);
   const [outputMetric, setOutputMetric] = useState<"npv" | "irr" | "payback" | "convergence">("npv");
   const [csvStatus, setCsvStatus] = useState<"idle" | "success" | "error">("idle");
@@ -132,10 +162,11 @@ export default function MonteCarlo() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Monte Carlo <span className="gradient-text">Simulation</span></h1>
-          <p className="text-sm text-slate-400 mt-0.5">Stochastic geothermal project modeling with {numTrials.toLocaleString()} randomized trials</p>
+          <p className="text-sm text-slate-400 mt-0.5">{selectedProject ? `Modeling ${selectedProject.name} (${selectedProject.capacity_MW} MW) with ${numTrials.toLocaleString()} trials` : `Stochastic geothermal project modeling with ${numTrials.toLocaleString()} randomized trials`}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => { setResults(null); setParams(defaultParams); setCustomParams([]); }} className="btn-secondary flex items-center gap-1.5">
+        <div className="flex items-center gap-3">
+          <ProjectSelector />
+          <button onClick={() => { setResults(null); setParams(selectedProject ? projectToParams(selectedProject) : defaultParams); setCustomParams([]); }} className="btn-secondary flex items-center gap-1.5">
             <RotateCcw size={14} /> Reset
           </button>
           <button onClick={runSim} disabled={running} className="btn-primary flex items-center gap-1.5">
@@ -398,6 +429,14 @@ export default function MonteCarlo() {
           <p className="text-xs text-slate-500 mt-1">The engine will generate {numTrials.toLocaleString()} randomized trials modeling drilling cost uncertainty, energy savings variability, and financing risk</p>
         </div>
       )}
+
+      {/* Workflow Navigation */}
+      <div className="flex items-center justify-between glass-card p-4">
+        <button onClick={() => navigate("/")} className="btn-secondary text-xs">Back to Dashboard</button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => navigate("/risk-analysis")} className="btn-primary flex items-center gap-1.5 text-xs">Next: Risk Analysis <ArrowRight size={14} /></button>
+        </div>
+      </div>
     </div>
   );
 }

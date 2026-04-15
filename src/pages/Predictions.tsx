@@ -1,6 +1,8 @@
-import { useState, useMemo } from "react";
-import { ArrowUpRight, ArrowDownRight, Plus, Trash2, RotateCcw, TrendingUp } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { ArrowUpRight, ArrowDownRight, Plus, Trash2, RotateCcw, TrendingUp, ArrowRight } from "lucide-react";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, Legend, LineChart, Line, BarChart, Bar, Cell, ReferenceLine } from "recharts";
+import { useProject, ProjectSelector } from "../data/ProjectContext";
+import { useNavigate } from "react-router-dom";
 
 interface ScenarioParams {
   name: string;
@@ -13,7 +15,16 @@ interface ScenarioParams {
   color: string;
 }
 
-const defaultScenarios: ScenarioParams[] = [
+function buildDefaultScenarios(capex: number, rev: number, opex: number, dr: number): ScenarioParams[] {
+  const opexRate = rev > 0 ? Math.round((opex / rev) * 100) : 15;
+  return [
+    { name: "Bull Case", probability: 0.20, initialCapex: capex, annualRevenue: Math.round(rev * 1.3), revenueGrowth: 3.5, opexRate: Math.max(8, opexRate - 3), discountRate: dr, color: "#10b981" },
+    { name: "Base Case", probability: 0.55, initialCapex: capex, annualRevenue: rev, revenueGrowth: 3.0, opexRate: opexRate, discountRate: dr, color: "#2B7BC2" },
+    { name: "Bear Case", probability: 0.25, initialCapex: capex, annualRevenue: Math.round(rev * 0.7), revenueGrowth: 2.0, opexRate: Math.min(30, opexRate + 3), discountRate: dr, color: "#E8652D" },
+  ];
+}
+
+const fallbackScenarios: ScenarioParams[] = [
   { name: "Bull Case", probability: 0.20, initialCapex: 150000, annualRevenue: 42000, revenueGrowth: 3.5, opexRate: 12, discountRate: 6, color: "#10b981" },
   { name: "Base Case", probability: 0.55, initialCapex: 150000, annualRevenue: 28000, revenueGrowth: 3.0, opexRate: 15, discountRate: 6, color: "#2B7BC2" },
   { name: "Bear Case", probability: 0.25, initialCapex: 150000, annualRevenue: 18000, revenueGrowth: 2.0, opexRate: 18, discountRate: 6, color: "#E8652D" },
@@ -102,9 +113,20 @@ function computePayback(s: ScenarioParams) {
 }
 
 export default function Predictions() {
-  const [scenarios, setScenarios] = useState<ScenarioParams[]>(defaultScenarios);
-  const [projectLife, setProjectLife] = useState(25);
+  const navigate = useNavigate();
+  const { selectedProject } = useProject();
+  const [scenarios, setScenarios] = useState<ScenarioParams[]>(() =>
+    selectedProject ? buildDefaultScenarios(selectedProject.capex, selectedProject.annualRevenue, selectedProject.opexPerYear, selectedProject.discountRate) : fallbackScenarios
+  );
+  const [projectLife, setProjectLife] = useState(() => selectedProject?.projectLife ?? 25);
   const [selectedScenario, setSelectedScenario] = useState(1);
+
+  useEffect(() => {
+    if (selectedProject) {
+      setScenarios(buildDefaultScenarios(selectedProject.capex, selectedProject.annualRevenue, selectedProject.opexPerYear, selectedProject.discountRate));
+      setProjectLife(selectedProject.projectLife);
+    }
+  }, [selectedProject]);
 
   const cashFlowData = useMemo(() => {
     const allFlows = scenarios.map(s => computeCashFlows(s, projectLife));
@@ -160,15 +182,16 @@ export default function Predictions() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Prediction <span className="gradient-text">Analysis</span></h1>
-          <p className="text-sm text-slate-400 mt-0.5">Multi-scenario forecasting for geothermal project cash flows and market conditions</p>
+          <p className="text-sm text-slate-400 mt-0.5">{selectedProject ? `Multi-scenario forecasting for ${selectedProject.name} (${selectedProject.capacity_MW} MW)` : "Multi-scenario forecasting for geothermal project cash flows"}</p>
         </div>
         <div className="flex items-center gap-3">
+          <ProjectSelector />
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400">Project Life:</span>
             <input type="number" min={5} max={40} value={projectLife} onChange={e => setProjectLife(Number(e.target.value))} className="input-dark w-16 text-xs text-center py-1.5" />
             <span className="text-xs text-slate-500">yrs</span>
           </div>
-          <button onClick={() => { setScenarios(defaultScenarios); setProjectLife(25); }} className="btn-secondary flex items-center gap-1.5 text-xs">
+          <button onClick={() => { setScenarios(selectedProject ? buildDefaultScenarios(selectedProject.capex, selectedProject.annualRevenue, selectedProject.opexPerYear, selectedProject.discountRate) : fallbackScenarios); setProjectLife(selectedProject?.projectLife ?? 25); }} className="btn-secondary flex items-center gap-1.5 text-xs">
             <RotateCcw size={12} /> Reset
           </button>
         </div>
@@ -356,6 +379,12 @@ export default function Predictions() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Workflow Navigation */}
+      <div className="flex items-center justify-between glass-card p-4">
+        <button onClick={() => navigate("/")} className="btn-secondary text-xs">Back to Dashboard</button>
+        <button onClick={() => navigate("/financing")} className="btn-primary flex items-center gap-1.5 text-xs">Next: Financing <ArrowRight size={14} /></button>
       </div>
     </div>
   );
