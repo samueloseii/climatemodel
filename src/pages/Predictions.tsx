@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { ArrowUpRight, ArrowDownRight, Plus, Trash2, RotateCcw, TrendingUp } from "lucide-react";
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, Legend, LineChart, Line, BarChart, Bar, Cell } from "recharts";
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, Legend, LineChart, Line, BarChart, Bar, Cell, ReferenceLine } from "recharts";
 
 interface ScenarioParams {
   name: string;
@@ -271,13 +271,22 @@ export default function Predictions() {
         <p className="text-xs text-slate-500 mb-3">All scenarios computed from editable parameters above</p>
         <ResponsiveContainer width="100%" height={320}>
           <AreaChart data={cashFlowData}>
+            <defs>
+              {scenarios.map((s) => (
+                <linearGradient key={s.name} id={`grad-${s.name.replace(/\s/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={s.color} stopOpacity={0.2} />
+                  <stop offset="95%" stopColor={s.color} stopOpacity={0} />
+                </linearGradient>
+              ))}
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
             <XAxis dataKey="year" tick={{ fontSize: 10, fill: "#64748b" }} interval={2} />
             <YAxis tick={{ fontSize: 10, fill: "#64748b" }} tickFormatter={v => `$${(v / 1000).toFixed(0)}K`} />
             <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid #334155", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => [`$${(v / 1000).toFixed(0)}K`, ""]} />
             <Legend />
+            <ReferenceLine y={0} stroke="#475569" strokeDasharray="4 4" label={{ value: "Break-even", position: "right", fontSize: 10, fill: "#64748b" }} />
             {scenarios.map((s) => (
-              <Area key={s.name} type="monotone" dataKey={s.name} stroke={s.color} fill={s.color} fillOpacity={0.08} strokeWidth={2} />
+              <Area key={s.name} type="monotone" dataKey={s.name} stroke={s.color} fill={`url(#grad-${s.name.replace(/\s/g, '')})`} strokeWidth={2} animationDuration={1200} />
             ))}
           </AreaChart>
         </ResponsiveContainer>

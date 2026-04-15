@@ -1,6 +1,45 @@
 import { useNavigate } from "react-router-dom";
-import { Activity, Shield, Brain, Swords, TrendingUp, ArrowUpRight, Mountain, DollarSign, BarChart3, Eye, FlaskConical, Wrench, FileDown, Layers, CreditCard, Upload, Zap, Globe, Users, Sliders } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Activity, Shield, Brain, Swords, TrendingUp, ArrowUpRight, Mountain, DollarSign, BarChart3, Eye, FlaskConical, Wrench, FileDown, Layers, CreditCard, Upload, Zap, Globe, Users, Sliders, Award, Target } from "lucide-react";
 import RiskHeatmap from "../components/RiskHeatmap";
+
+function AnimatedCounter({ target, prefix = "", suffix = "", duration = 1200 }: { target: number; prefix?: string; suffix?: string; duration?: number }) {
+  const [current, setCurrent] = useState(0);
+  useEffect(() => {
+    const steps = 40;
+    const stepTime = duration / steps;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      const progress = step / steps;
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCurrent(Math.round(target * eased * 10) / 10);
+      if (step >= steps) { setCurrent(target); clearInterval(timer); }
+    }, stepTime);
+    return () => clearInterval(timer);
+  }, [target, duration]);
+  return <span>{prefix}{current % 1 === 0 ? current.toFixed(0) : current.toFixed(1)}{suffix}</span>;
+}
+
+function RiskGauge({ score, label }: { score: number; label: string }) {
+  const color = score >= 75 ? "#10b981" : score >= 50 ? "#f59e0b" : "#ef4444";
+  const grade = score >= 85 ? "A+" : score >= 75 ? "A" : score >= 65 ? "B+" : score >= 50 ? "B" : score >= 35 ? "C" : "D";
+  const circumference = 2 * Math.PI * 40;
+  const dashoffset = circumference * (1 - score / 100);
+  return (
+    <div className="text-center">
+      <svg width="96" height="96" viewBox="0 0 96 96" className="mx-auto">
+        <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(51,65,85,0.3)" strokeWidth="6" />
+        <circle cx="48" cy="48" r="40" fill="none" stroke={color} strokeWidth="6" strokeLinecap="round"
+          strokeDasharray={circumference} strokeDashoffset={dashoffset}
+          transform="rotate(-90 48 48)" style={{ transition: "stroke-dashoffset 1.5s cubic-bezier(0.22, 0.61, 0.36, 1)" }} />
+        <text x="48" y="44" textAnchor="middle" fill={color} fontSize="22" fontWeight="700">{grade}</text>
+        <text x="48" y="60" textAnchor="middle" fill="#64748b" fontSize="10">{score}/100</text>
+      </svg>
+      <p className="text-xs text-slate-400 mt-1">{label}</p>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -37,26 +76,57 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Key Metrics */}
+      {/* Key Metrics with Animated Counters */}
       <div className="grid grid-cols-5 gap-4">
         {[
-          { label: "Portfolio NPV", value: "$4.2M", change: "+12.4%", icon: BarChart3, color: "#10b981" },
-          { label: "Avg. IRR", value: "13.8%", change: "+2.1%", icon: TrendingUp, color: "#2B7BC2" },
-          { label: "VaR (95%)", value: "$-142K", change: "Controlled", icon: Shield, color: "#E8652D" },
-          { label: "Active Projects", value: "8", change: "3 in FID", icon: Globe, color: "#6CB4D9" },
-          { label: "Analysis Modules", value: "16", change: "All active", icon: Activity, color: "#a855f7" },
+          { label: "Portfolio NPV", numValue: 4.2, prefix: "$", suffix: "M", change: "+12.4%", icon: BarChart3, color: "#10b981" },
+          { label: "Avg. IRR", numValue: 13.8, prefix: "", suffix: "%", change: "+2.1%", icon: TrendingUp, color: "#2B7BC2" },
+          { label: "VaR (95%)", numValue: 142, prefix: "-$", suffix: "K", change: "Controlled", icon: Shield, color: "#E8652D" },
+          { label: "Active Projects", numValue: 8, prefix: "", suffix: "", change: "3 in FID", icon: Globe, color: "#6CB4D9" },
+          { label: "Analysis Modules", numValue: 16, prefix: "", suffix: "", change: "All active", icon: Activity, color: "#a855f7" },
         ].map((stat) => (
-          <div key={stat.label} className="glass-card p-4">
+          <div key={stat.label} className="glass-card p-4 card-enter">
             <div className="flex items-center justify-between mb-2">
               <stat.icon size={16} style={{ color: stat.color }} />
               <span className="text-xs text-emerald-400 font-medium flex items-center gap-0.5">
                 {stat.change} <ArrowUpRight size={10} />
               </span>
             </div>
-            <p className="text-xl font-bold text-white tabular-nums">{stat.value}</p>
+            <p className="text-xl font-bold text-white tabular-nums">
+              <AnimatedCounter target={stat.numValue} prefix={stat.prefix} suffix={stat.suffix} />
+            </p>
             <p className="text-xs text-slate-500 mt-0.5">{stat.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* Project Risk Scorecard */}
+      <div className="glass-card p-5 card-enter">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Award size={16} style={{ color: "#f59e0b" }} />
+            <h2 className="text-sm font-semibold text-white">Project Investment Readiness Score</h2>
+            <span className="badge-new">Unique</span>
+          </div>
+          <button onClick={() => navigate("/portfolio")} className="text-xs font-medium flex items-center gap-1 transition-colors hover:text-white" style={{ color: "#6CB4D9" }}>
+            Full Analysis <ArrowUpRight size={11} />
+          </button>
+        </div>
+        <div className="grid grid-cols-6 gap-4">
+          <RiskGauge score={82} label="Overall Score" />
+          <RiskGauge score={91} label="Resource Quality" />
+          <RiskGauge score={75} label="Financial Viability" />
+          <RiskGauge score={68} label="Risk Profile" />
+          <RiskGauge score={88} label="Regulatory" />
+          <RiskGauge score={72} label="Market Timing" />
+        </div>
+        <div className="mt-4 flex items-center gap-6 p-3 rounded-lg" style={{ background: "rgba(43,123,194,0.05)", border: "1px solid rgba(43,123,194,0.12)" }}>
+          <Target size={14} style={{ color: "#2B7BC2" }} className="shrink-0" />
+          <p className="text-xs text-slate-400">
+            <span className="text-white font-medium">Investment Readiness: A (82/100)</span> — Project exceeds threshold for institutional capital deployment.
+            Resource quality and regulatory alignment are strong. Focus on improving risk profile through phased exploration and securing offtake agreements to improve financial viability score.
+          </p>
+        </div>
       </div>
 
       {/* Quick Actions + Risk Heatmap */}

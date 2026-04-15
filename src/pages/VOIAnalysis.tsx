@@ -207,8 +207,9 @@ export default function VOIAnalysis() {
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-white">Payoff Matrix <span className="text-slate-500 font-normal">&mdash; edit states, probabilities, and payoffs</span></h3>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400">Survey Cost:</span>
+              <input type="range" min={10000} max={500000} step={10000} value={surveyCost} onChange={e => setSurveyCost(Number(e.target.value))} className="range-slider w-32" />
               <input type="number" step={10000} value={surveyCost} onChange={e => setSurveyCost(Number(e.target.value))} className="input-dark w-28 text-xs text-center py-1.5 font-mono" />
             </div>
             <button onClick={addState} className="btn-primary flex items-center gap-1 text-xs py-1.5 px-3">

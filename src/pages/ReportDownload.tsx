@@ -17,6 +17,8 @@ interface ReportConfig {
   includePredictions: boolean;
   includeGeological: boolean;
   includeFinancing: boolean;
+  includeSensitivity: boolean;
+  includePortfolio: boolean;
 }
 
 const defaultConfig: ReportConfig = {
@@ -35,6 +37,8 @@ const defaultConfig: ReportConfig = {
   includePredictions: true,
   includeGeological: true,
   includeFinancing: true,
+  includeSensitivity: true,
+  includePortfolio: true,
 };
 
 function generateReportHTML(config: ReportConfig): string {
@@ -232,10 +236,56 @@ function generateReportHTML(config: ReportConfig): string {
     `);
   }
 
+  if (config.includeSensitivity) {
+    sections.push(`
+      <div class="section">
+        <h2>10. Sensitivity Analysis</h2>
+        <h3>10.1 Tornado Chart Analysis</h3>
+        <p>Each key input variable is perturbed individually across its plausible range while all other variables are held at their base values. The resulting NPV impact is plotted as a tornado chart, sorted by total impact range (high minus low). This identifies the variables that most influence project value.</p>
+        <table>
+          <tr><th>Variable</th><th>Low Value NPV Impact</th><th>High Value NPV Impact</th><th>Total Range</th></tr>
+          <tr><td>Drilling Cost ($/ft)</td><td style="color:#ef4444">-$42K</td><td style="color:#10b981">+$38K</td><td>$80K</td></tr>
+          <tr><td>Annual Energy Savings</td><td style="color:#ef4444">-$35K</td><td style="color:#10b981">+$41K</td><td>$76K</td></tr>
+          <tr><td>Discount Rate</td><td style="color:#ef4444">-$28K</td><td style="color:#10b981">+$32K</td><td>$60K</td></tr>
+          <tr><td>System Lifetime</td><td style="color:#ef4444">-$22K</td><td style="color:#10b981">+$35K</td><td>$57K</td></tr>
+          <tr><td>Carbon Credits</td><td style="color:#ef4444">-$18K</td><td style="color:#10b981">+$20K</td><td>$38K</td></tr>
+        </table>
+        <h3>10.2 Spider Plot Analysis</h3>
+        <p>Spider plots show NPV sensitivity to simultaneous percentage changes (-50% to +50%) in the top 5 most influential variables. Non-linear responses indicate variables where small changes have disproportionate effects on project value. These are priority targets for uncertainty reduction through additional data collection or contractual risk mitigation.</p>
+        <h3>10.3 Key Findings</h3>
+        <ul>
+          <li><strong>Drilling Cost</strong> is the single most impactful variable — targeted geological surveys can narrow this uncertainty</li>
+          <li><strong>Annual Energy Savings</strong> is the second-largest driver — building energy audits provide high-value information</li>
+          <li><strong>Discount Rate</strong> sensitivity highlights the importance of securing favorable financing terms early</li>
+        </ul>
+      </div>
+    `);
+  }
+
+  if (config.includePortfolio) {
+    sections.push(`
+      <div class="section">
+        <h2>11. Portfolio Comparison</h2>
+        <h3>11.1 Multi-Project Analysis</h3>
+        <p>GeoPro supports comparative analysis of multiple geothermal projects within a portfolio. Each project is evaluated across six dimensions: NPV potential, Risk Profile (VaR), Probability of Success, IRR, System Reliability (MTTF-derived score), and Environmental Impact (carbon offset value).</p>
+        <h3>11.2 Radar Chart Scoring</h3>
+        <p>Projects are scored on a normalized 0-100 scale across each dimension and visualized using radar charts. This enables rapid identification of projects with the most balanced risk-return profiles versus those that excel in specific areas but carry elevated risks in others.</p>
+        <h3>11.3 Portfolio Optimization</h3>
+        <p>By comparing projects side-by-side, portfolio managers can:</p>
+        <ul>
+          <li>Identify diversification benefits across geologies, regions, and project stages</li>
+          <li>Allocate capital to maximize portfolio-level expected utility</li>
+          <li>Flag projects with correlated risk exposures that reduce diversification value</li>
+          <li>Prioritize phased investment based on information value and risk reduction potential</li>
+        </ul>
+      </div>
+    `);
+  }
+
   if (config.includeFinancing) {
     sections.push(`
       <div class="section">
-        <h2>10. Financing Options</h2>
+        <h2>12. Financing Options</h2>
         <h3>10.1 Structures Evaluated</h3>
         <ul>
           <li><strong>Construction-to-Term Loan:</strong> High upside in strong markets but significant downside exposure</li>
@@ -320,6 +370,7 @@ export default function ReportDownload() {
     config.includeExpectedUtility, config.includeDecisionTheory, config.includeVOI,
     config.includeBayesian, config.includeReliability, config.includePredictions,
     config.includeGeological, config.includeFinancing,
+    config.includeSensitivity, config.includePortfolio,
   ].filter(Boolean).length;
 
   const generateReport = () => {
@@ -352,6 +403,8 @@ export default function ReportDownload() {
     { key: "includeReliability" as const, label: "Reliability Analysis", icon: Wrench, desc: "Weibull failure modeling" },
     { key: "includePredictions" as const, label: "Predictions", icon: TrendingUp, desc: "Cash flow scenarios, market forecasts" },
     { key: "includeFinancing" as const, label: "Financing Options", icon: Building2, desc: "Structure comparison, carbon credits" },
+    { key: "includeSensitivity" as const, label: "Sensitivity Analysis", icon: TrendingUp, desc: "Tornado charts, spider plots, NPV drivers" },
+    { key: "includePortfolio" as const, label: "Portfolio Comparison", icon: Shield, desc: "Multi-project radar scoring, optimization" },
   ];
 
   return (
