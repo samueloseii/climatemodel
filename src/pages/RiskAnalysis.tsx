@@ -50,17 +50,19 @@ export default function RiskAnalysis() {
     const gpd = fitGPD(tailLosses);
 
     // Return periods: 1-in-N year loss levels
+    // The GPD quantile gives the excess loss beyond the threshold.
+    // Longer return periods → higher exceedance quantile → larger loss.
     const returnPeriods = [5, 10, 20, 50, 100].map(rp => {
       const exceedanceProb = 1 / rp;
       const quantile = gpdQuantile(1 - exceedanceProb, gpd.xi, gpd.sigma, 0);
-      return { returnPeriod: rp, loss: threshold - quantile, label: `1-in-${rp}` };
+      return { returnPeriod: rp, loss: quantile, label: `1-in-${rp}` };
     });
 
     // Tail distribution curve for chart
     const tailCurve = Array.from({ length: 50 }, (_, i) => {
       const p = (i + 1) / 51;
       const quantile = gpdQuantile(p, gpd.xi, gpd.sigma, 0);
-      return { exceedance: ((1 - p) * 100).toFixed(1), loss: Math.round(threshold - quantile) };
+      return { exceedance: ((1 - p) * 100).toFixed(1), loss: Math.round(quantile) };
     });
 
     return { gpd, threshold, tailN, returnPeriods, tailCurve };
