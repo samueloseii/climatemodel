@@ -74,7 +74,7 @@ export default function Sidebar() {
       <div className="p-3 mt-auto">
         <div className="rounded-lg p-3" style={{ background: "rgba(43,123,194,0.06)", border: "1px solid rgba(43,123,194,0.15)" }}>
           <p className="text-xs font-medium mb-0.5" style={{ color: "#E8652D" }}>Analytics Engine</p>
-          <p className="text-xs text-slate-500 leading-relaxed">v2.0 &middot; All modules active</p>
+          <p className="text-xs text-slate-500 leading-relaxed">v3.0 &middot; 14 modules active</p>
         </div>
       </div>
     </aside>
