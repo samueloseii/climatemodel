@@ -19,8 +19,8 @@ export default function Settings() {
         ].map(section => (
           <div key={section.title} className="glass-card p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center">
-                <section.icon size={20} className="text-orange-400" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(232,101,45,0.1)" }}>
+                <section.icon size={20} style={{ color: "#E8652D" }} />
               </div>
               <div>
                 <h3 className="text-base font-semibold text-white">{section.title}</h3>

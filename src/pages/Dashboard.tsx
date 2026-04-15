@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Activity, Shield, Brain, Swords, TrendingUp, ArrowUpRight, Zap, Target, BarChart3 } from "lucide-react";
+import { Activity, Shield, Brain, Swords, TrendingUp, ArrowUpRight, Mountain, DollarSign, BarChart3, Layers } from "lucide-react";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -7,26 +7,25 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 border border-slate-700/50 p-8">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-orange-500/10 to-transparent rounded-full -translate-y-32 translate-x-32" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-amber-500/5 to-transparent rounded-full translate-y-32 -translate-x-16" />
+      <div className="relative overflow-hidden rounded-xl p-8" style={{ background: "linear-gradient(135deg, rgba(15,23,42,0.9), rgba(30,41,59,0.7))", border: "1px solid rgba(51,65,85,0.4)" }}>
+        <div className="absolute top-0 right-0 w-80 h-80 rounded-full" style={{ background: "radial-gradient(circle, rgba(43,123,194,0.08) 0%, transparent 70%)", transform: "translate(30%, -30%)" }} />
         <div className="relative">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-xs text-green-400 font-medium tracking-wider uppercase">Live Analytics Engine</span>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+            <span className="text-xs text-emerald-400 font-medium tracking-wider uppercase">Analytics Engine Active</span>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2">
+          <h1 className="text-3xl font-bold text-white mb-2">
             Geothermal Investment <span className="gradient-text">Intelligence</span>
           </h1>
-          <p className="text-slate-400 text-lg max-w-2xl">
-            Quantify uncertainty, optimize financial structures, and communicate risk to stakeholders with institutional-grade analytics.
+          <p className="text-slate-400 text-base max-w-2xl leading-relaxed">
+            Quantify pre-FID uncertainty, optimize financial structures, and communicate risk to stakeholders with institutional-grade analytics.
           </p>
           <div className="flex gap-3 mt-6">
             <button onClick={() => navigate("/monte-carlo")} className="btn-primary flex items-center gap-2">
-              <Activity size={18} /> Run Simulation
+              <Activity size={16} /> Run Simulation
             </button>
             <button onClick={() => navigate("/risk-analysis")} className="btn-secondary flex items-center gap-2">
-              <Shield size={18} /> Risk Dashboard
+              <Shield size={16} /> Risk Dashboard
             </button>
           </div>
         </div>
@@ -35,67 +34,58 @@ export default function Dashboard() {
       {/* Key Metrics */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: "Portfolio NPV", value: "$4.2M", change: "+12.4%", icon: BarChart3, color: "from-emerald-500/20 to-emerald-600/5", iconColor: "text-emerald-400" },
-          { label: "Avg. IRR", value: "13.8%", change: "+2.1%", icon: TrendingUp, color: "from-blue-500/20 to-blue-600/5", iconColor: "text-blue-400" },
-          { label: "VaR (95%)", value: "$-142K", change: "Controlled", icon: Shield, color: "from-orange-500/20 to-orange-600/5", iconColor: "text-orange-400" },
-          { label: "Active Models", value: "24", change: "3 running", icon: Activity, color: "from-purple-500/20 to-purple-600/5", iconColor: "text-purple-400" },
+          { label: "Portfolio NPV", value: "$4.2M", change: "+12.4%", icon: BarChart3, color: "#10b981" },
+          { label: "Avg. IRR", value: "13.8%", change: "+2.1%", icon: TrendingUp, color: "#2B7BC2" },
+          { label: "VaR (95%)", value: "$-142K", change: "Controlled", icon: Shield, color: "#E8652D" },
+          { label: "Active Models", value: "24", change: "3 running", icon: Activity, color: "#6CB4D9" },
         ].map((stat) => (
-          <div key={stat.label} className="glass-card-hover p-5 stat-glow">
+          <div key={stat.label} className="glass-card p-5">
             <div className="flex items-center justify-between mb-3">
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center`}>
-                <stat.icon size={20} className={stat.iconColor} />
-              </div>
+              <stat.icon size={18} style={{ color: stat.color }} />
               <span className="text-xs text-emerald-400 font-medium flex items-center gap-1">
-                {stat.change} <ArrowUpRight size={12} />
+                {stat.change} <ArrowUpRight size={11} />
               </span>
             </div>
-            <p className="text-2xl font-bold text-white">{stat.value}</p>
-            <p className="text-sm text-slate-400 mt-0.5">{stat.label}</p>
+            <p className="text-2xl font-bold text-white tabular-nums">{stat.value}</p>
+            <p className="text-xs text-slate-400 mt-1">{stat.label}</p>
           </div>
         ))}
       </div>
 
       {/* Analysis Tools Grid */}
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { icon: Activity, title: "Monte Carlo Simulation", desc: "Run 5,000+ trial simulations with customizable probability distributions for drilling costs, energy savings, and market variables.", path: "/monte-carlo", color: "from-orange-500 to-amber-500", tag: "Core Engine" },
-          { icon: Shield, title: "Risk Analysis (VaR / CVaR)", desc: "Value-at-Risk and Conditional VaR analysis with sensitivity tornado charts. Quantify downside exposure for lenders.", path: "/risk-analysis", color: "from-red-500 to-rose-500", tag: "Risk Metrics" },
-          { icon: Brain, title: "Expected Utility Theory", desc: "Model stakeholder-specific risk preferences. Compare risk-neutral vs risk-averse decision frameworks.", path: "/expected-utility", color: "from-violet-500 to-purple-500", tag: "Decision Science" },
-          { icon: Swords, title: "Minimax & Decision Theory", desc: "Maximin, Maximax, Hurwicz criterion, and Minimax Regret analysis across financing structures.", path: "/decision-theory", color: "from-cyan-500 to-blue-500", tag: "Game Theory" },
-          { icon: TrendingUp, title: "Prediction & Scenario Analysis", desc: "Multi-scenario forecasting with probability-weighted outcomes under bull, base, and bear cases.", path: "/predictions", color: "from-emerald-500 to-teal-500", tag: "Forecasting" },
-          { icon: Target, title: "Sensitivity Analysis", desc: "Tornado diagrams showing which input variables drive the most uncertainty in project outcomes.", path: "/risk-analysis", color: "from-amber-500 to-yellow-500", tag: "Analytics" },
-        ].map((tool) => (
-          <div key={tool.title} onClick={() => navigate(tool.path)} className="glass-card-hover p-6 cursor-pointer group">
-            <div className="flex items-center justify-between mb-4">
-              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${tool.color} flex items-center justify-center shadow-lg`}>
-                <tool.icon size={22} className="text-white" />
+      <div>
+        <h2 className="text-lg font-semibold text-white mb-3">Analysis Modules</h2>
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { icon: Activity, title: "Monte Carlo Simulation", desc: "Run stochastic simulations with customizable distributions for drilling costs, energy savings, and market variables.", path: "/monte-carlo", accent: "text-blue-400", tag: "Core Engine" },
+            { icon: Shield, title: "Risk Analysis (VaR / CVaR)", desc: "Value-at-Risk and Conditional VaR with sensitivity tornado charts. Quantify downside exposure for lenders.", path: "/risk-analysis", accent: "text-amber-400", tag: "Risk Metrics" },
+            { icon: Brain, title: "Expected Utility Theory", desc: "Stakeholder-specific risk preferences. Compare risk-neutral vs risk-averse decision frameworks with editable scenarios.", path: "/expected-utility", accent: "text-violet-400", tag: "Decision Science" },
+            { icon: Swords, title: "Decision Theory", desc: "Maximin, Maximax, Hurwicz criterion, and Minimax Regret across customizable financing structures and market states.", path: "/decision-theory", accent: "text-cyan-400", tag: "Game Theory" },
+            { icon: TrendingUp, title: "Predictions & Scenarios", desc: "Multi-scenario forecasting with probability-weighted outcomes under bull, base, and bear market conditions.", path: "/predictions", accent: "text-emerald-400", tag: "Forecasting" },
+            { icon: Mountain, title: "Geological Assessment", desc: "Subsurface characterization, thermal gradient analysis, and site suitability scoring for geothermal prospects.", path: "/geological", accent: "text-rose-400", tag: "Geoscience" },
+            { icon: DollarSign, title: "Financing & Revenue", desc: "Compare financing structures, model carbon credit revenue, and analyze tax incentive programs.", path: "/financing", accent: "text-green-400", tag: "Capital" },
+            { icon: Layers, title: "Sensitivity Analysis", desc: "Tornado diagrams showing which input variables drive the most uncertainty in project outcomes.", path: "/risk-analysis", accent: "text-orange-400", tag: "Analytics" },
+          ].map((tool) => (
+            <div key={tool.title} onClick={() => navigate(tool.path)} className="glass-card-hover p-5 cursor-pointer group">
+              <div className="flex items-center justify-between mb-3">
+                <tool.icon size={18} className={tool.accent} />
+                <span className="text-xs text-slate-500 font-medium">{tool.tag}</span>
               </div>
-              <span className="text-xs font-medium text-slate-500 bg-slate-800 px-2.5 py-1 rounded-full">{tool.tag}</span>
+              <h3 className="text-sm font-semibold text-white mb-1.5 transition-colors" style={{ color: undefined }}>{tool.title}</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">{tool.desc}</p>
             </div>
-            <h3 className="text-base font-semibold text-white mb-2 group-hover:text-orange-400 transition-colors">{tool.title}</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">{tool.desc}</p>
-            <div className="mt-4 flex items-center gap-1 text-sm text-orange-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-              Launch Tool <ArrowUpRight size={14} />
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {/* Methodology Banner */}
-      <div className="glass-card p-6">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-500/10 flex items-center justify-center shrink-0">
-            <Zap size={24} className="text-orange-400" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-1">Institutional-Grade Methodology</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Our analytics engine combines Bayesian uncertainty quantification, Monte Carlo simulation, and stakeholder-aware decision frameworks.
-              Each tool adapts its output to the evaluator — developers see expected NPV, lenders see CVaR and debt service coverage,
-              and development banks see minimax regret across portfolio scenarios. Built on public data from USGS, IEA, NREL, and World Bank.
-            </p>
-          </div>
-        </div>
+      {/* Methodology */}
+      <div className="glass-card p-5">
+        <h3 className="text-sm font-semibold text-white mb-1">Methodology</h3>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          Combines Bayesian uncertainty quantification, Monte Carlo simulation, and stakeholder-aware decision frameworks.
+          Each tool adapts output to the evaluator — developers see expected NPV, lenders see CVaR and DSCR,
+          development banks see minimax regret across portfolio scenarios. Built on USGS, IEA, NREL, and World Bank data.
+        </p>
       </div>
     </div>
   );

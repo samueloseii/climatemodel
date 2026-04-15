@@ -23,14 +23,14 @@ export default function Projects() {
 
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: "Total Projects", value: totalProjects, accent: "text-white" },
-          { label: "In Progress", value: inProgress, accent: "text-blue-400" },
-          { label: "Completed", value: completed, accent: "text-emerald-400" },
-          { label: "Draft", value: draft, accent: "text-slate-300" },
+          { label: "Total Projects", value: totalProjects, accent: "#ffffff" },
+          { label: "In Progress", value: inProgress, accent: "#2B7BC2" },
+          { label: "Completed", value: completed, accent: "#10b981" },
+          { label: "Draft", value: draft, accent: "#6CB4D9" },
         ].map((stat) => (
           <div key={stat.label} className="glass-card p-5">
             <p className="text-sm text-slate-400">{stat.label}</p>
-            <p className={`text-3xl font-bold mt-1 ${stat.accent}`}>{stat.value}</p>
+            <p className="text-3xl font-bold mt-1" style={{ color: stat.accent }}>{stat.value}</p>
           </div>
         ))}
       </div>
@@ -38,7 +38,7 @@ export default function Projects() {
       {Object.entries(grouped).map(([state, stateProjects]) => (
         <div key={state}>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-3 h-3 bg-orange-500 rounded-full" />
+            <div className="w-3 h-3 rounded-full" style={{ background: "#E8652D" }} />
             <h2 className="text-xl font-bold text-white">{state}</h2>
             <span className="text-sm text-slate-500">
               ({stateProjects.length} project{stateProjects.length > 1 ? "s" : ""})

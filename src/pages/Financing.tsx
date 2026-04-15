@@ -12,10 +12,10 @@ export default function Financing() {
 
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: "Financing Options", value: "8", sub: "Available programs", icon: DollarSign, accent: "text-orange-400" },
-          { label: "Avg. Interest Rate", value: "4.8%", sub: "For geothermal projects", icon: TrendingUp, accent: "text-emerald-400" },
-          { label: "Tax Incentives", value: "30%", sub: "ITC under IRA", icon: Leaf, accent: "text-cyan-400" },
-          { label: "Carbon Markets", value: "4", sub: "Active trading systems", icon: Leaf, accent: "text-blue-400" },
+          { label: "Financing Options", value: "8", sub: "Available programs", icon: DollarSign, accent: "#E8652D" },
+          { label: "Avg. Interest Rate", value: "4.8%", sub: "For geothermal projects", icon: TrendingUp, accent: "#10b981" },
+          { label: "Tax Incentives", value: "30%", sub: "ITC under IRA", icon: Leaf, accent: "#6CB4D9" },
+          { label: "Carbon Markets", value: "4", sub: "Active trading systems", icon: Leaf, accent: "#2B7BC2" },
         ].map((stat) => (
           <div key={stat.label} className="glass-card p-5 flex items-center justify-between">
             <div>
@@ -23,7 +23,7 @@ export default function Financing() {
               <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
               <p className="text-xs text-slate-500 mt-0.5">{stat.sub}</p>
             </div>
-            <stat.icon size={20} className={stat.accent} />
+            <stat.icon size={20} style={{ color: stat.accent }} />
           </div>
         ))}
       </div>
@@ -100,10 +100,10 @@ export default function Financing() {
             <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} domain={[0, 100]} />
             <Tooltip contentStyle={{ background: "#1e293b", border: "1px solid #475569", borderRadius: 12 }} />
             <Legend />
-            <Line type="monotone" dataKey="euEts" stroke="#3b82f6" name="EU ETS" strokeWidth={2} dot={{ r: 4 }} />
+            <Line type="monotone" dataKey="euEts" stroke="#2B7BC2" name="EU ETS" strokeWidth={2} dot={{ r: 4 }} />
             <Line type="monotone" dataKey="california" stroke="#10b981" name="California" strokeWidth={2} dot={{ r: 4 }} />
-            <Line type="monotone" dataKey="rggi" stroke="#f97316" name="RGGI" strokeWidth={2} dot={{ r: 4 }} />
-            <Line type="monotone" dataKey="voluntary" stroke="#eab308" name="Voluntary" strokeWidth={2} dot={{ r: 4 }} />
+            <Line type="monotone" dataKey="rggi" stroke="#E8652D" name="RGGI" strokeWidth={2} dot={{ r: 4 }} />
+            <Line type="monotone" dataKey="voluntary" stroke="#6CB4D9" name="Voluntary" strokeWidth={2} dot={{ r: 4 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -111,7 +111,7 @@ export default function Financing() {
       <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <Leaf size={20} className="text-cyan-400" />
+            <Leaf size={20} style={{ color: "#6CB4D9" }} />
             <div>
               <h3 className="text-lg font-semibold text-white">Federal & State Tax Incentives</h3>
               <p className="text-sm text-slate-400">IRA tax credits, state rebates, and utility incentive programs</p>
@@ -121,7 +121,7 @@ export default function Financing() {
         </div>
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-slate-800/40 rounded-xl p-5 border border-slate-700/30">
-            <p className="text-sm font-semibold text-orange-400 mb-1">Federal ITC</p>
+            <p className="text-sm font-semibold mb-1" style={{ color: "#E8652D" }}>Federal ITC</p>
             <p className="text-3xl font-bold text-white">30%</p>
             <p className="text-sm text-slate-400 mt-1">Investment Tax Credit under IRA</p>
             <ul className="mt-3 space-y-1 text-xs text-emerald-400">
@@ -132,7 +132,7 @@ export default function Financing() {
             </ul>
           </div>
           <div className="bg-slate-800/40 rounded-xl p-5 border border-slate-700/30">
-            <p className="text-sm font-semibold text-orange-400 mb-1">State Rebates</p>
+            <p className="text-sm font-semibold mb-1" style={{ color: "#E8652D" }}>State Rebates</p>
             <p className="text-3xl font-bold text-white">Varies</p>
             <p className="text-sm text-slate-400 mt-1">Location-specific state programs</p>
             <ul className="mt-3 space-y-1 text-xs text-emerald-400">
@@ -143,7 +143,7 @@ export default function Financing() {
             </ul>
           </div>
           <div className="bg-slate-800/40 rounded-xl p-5 border border-slate-700/30">
-            <p className="text-sm font-semibold text-orange-400 mb-1">Section 179D</p>
+            <p className="text-sm font-semibold mb-1" style={{ color: "#E8652D" }}>Section 179D</p>
             <p className="text-3xl font-bold text-white">$5.00</p>
             <p className="text-sm text-slate-400 mt-1">Per sq ft for energy-efficient buildings</p>
             <ul className="mt-3 space-y-1 text-xs text-emerald-400">
@@ -170,7 +170,7 @@ export default function Financing() {
           ].map(f => (
             <div key={f.name} className="bg-slate-800/40 rounded-xl p-5 border border-slate-700/30">
               <div className="flex items-center gap-3 mb-2">
-                <f.icon size={18} className="text-orange-400" />
+                <f.icon size={18} style={{ color: "#E8652D" }} />
                 <h4 className="text-sm font-semibold text-white">{f.name}</h4>
               </div>
               <p className="text-xs text-slate-400 mb-3">{f.desc}</p>
@@ -196,7 +196,7 @@ export default function Financing() {
       <div className="grid grid-cols-2 gap-4">
         <div className="glass-card p-6">
           <div className="flex items-center gap-2 mb-3">
-            <DollarSign size={18} className="text-blue-400" />
+            <DollarSign size={18} style={{ color: "#2B7BC2" }} />
             <h3 className="text-base font-semibold text-white">Traditional Financing</h3>
           </div>
           <div className="space-y-2">

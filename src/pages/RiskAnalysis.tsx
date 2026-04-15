@@ -70,7 +70,7 @@ export default function RiskAnalysis() {
                   <div className="absolute top-0 h-full bg-red-500/70 rounded-l" style={{ right: '50%', width: `${Math.abs(item.high) / (Math.max(Math.abs(item.low), Math.abs(item.high)) * 2) * 100}%` }} />
                 )}
               </div>
-              <div className="w-20 text-sm font-mono text-orange-400 shrink-0">{item.pct}% impact</div>
+              <div className="w-20 text-sm font-mono shrink-0" style={{ color: "#E8652D" }}>{item.pct}% impact</div>
             </div>
           ))}
         </div>
@@ -81,17 +81,17 @@ export default function RiskAnalysis() {
           {/* VaR/CVaR Cards */}
           <div className="grid grid-cols-4 gap-4">
             {[
-              { label: `VaR (${(confidence*100).toFixed(0)}%)`, value: fmt(var_val), desc: "Maximum expected loss", icon: Shield, color: "text-orange-400" },
-              { label: `CVaR (${(confidence*100).toFixed(0)}%)`, value: fmt(cvar_val), desc: "Expected loss in worst tail", icon: AlertTriangle, color: "text-red-400" },
-              { label: "Mean NPV", value: fmt(computeMean(npvValues)), desc: "Expected project value", icon: Shield, color: "text-emerald-400" },
-              { label: "P(Loss)", value: `${(npvValues.filter(v => v < 0).length / npvValues.length * 100).toFixed(1)}%`, desc: "Probability of negative NPV", icon: AlertTriangle, color: npvValues.filter(v => v < 0).length / npvValues.length > 0.3 ? "text-red-400" : "text-emerald-400" },
+              { label: `VaR (${(confidence*100).toFixed(0)}%)`, value: fmt(var_val), desc: "Maximum expected loss", icon: Shield, hexColor: "#E8652D" },
+              { label: `CVaR (${(confidence*100).toFixed(0)}%)`, value: fmt(cvar_val), desc: "Expected loss in worst tail", icon: AlertTriangle, hexColor: "#ef4444" },
+              { label: "Mean NPV", value: fmt(computeMean(npvValues)), desc: "Expected project value", icon: Shield, hexColor: "#10b981" },
+              { label: "P(Loss)", value: `${(npvValues.filter(v => v < 0).length / npvValues.length * 100).toFixed(1)}%`, desc: "Probability of negative NPV", icon: AlertTriangle, hexColor: npvValues.filter(v => v < 0).length / npvValues.length > 0.3 ? "#ef4444" : "#10b981" },
             ].map(s => (
               <div key={s.label} className="glass-card p-5">
                 <div className="flex items-center gap-2 mb-2">
-                  <s.icon size={16} className={s.color} />
+                  <s.icon size={16} style={{ color: s.hexColor }} />
                   <span className="text-sm text-slate-400">{s.label}</span>
                 </div>
-                <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                <p className="text-2xl font-bold" style={{ color: s.hexColor }}>{s.value}</p>
                 <p className="text-xs text-slate-500 mt-1">{s.desc}</p>
               </div>
             ))}
@@ -101,7 +101,7 @@ export default function RiskAnalysis() {
           <div className="glass-card p-4 flex items-center gap-4">
             <span className="text-sm text-slate-400">Confidence Level:</span>
             {[0.90, 0.95, 0.99].map(c => (
-              <button key={c} onClick={() => setConfidence(c)} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${confidence === c ? "bg-orange-500/20 text-orange-400 border border-orange-500/30" : "text-slate-400 hover:text-slate-200"}`}>
+              <button key={c} onClick={() => setConfidence(c)} className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${confidence === c ? "border" : "text-slate-400 hover:text-slate-200"}`} style={confidence === c ? { background: "rgba(232,101,45,0.12)", color: "#E8652D", borderColor: "rgba(232,101,45,0.3)" } : {}}>
                 {(c*100).toFixed(0)}%
               </button>
             ))}
@@ -112,16 +112,16 @@ export default function RiskAnalysis() {
             <h3 className="text-lg font-semibold text-white mb-3">Risk Interpretation for Stakeholders</h3>
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/30">
-                <p className="text-sm font-semibold text-orange-400 mb-2">Developer View</p>
+                <p className="text-sm font-semibold mb-2" style={{ color: "#E8652D" }}>Developer View</p>
                 <p className="text-sm text-slate-300">Expected NPV of <span className="text-emerald-400 font-semibold">{fmt(computeMean(npvValues))}</span> with {(npvValues.filter(v => v > 0).length / npvValues.length * 100).toFixed(0)}% probability of positive returns.</p>
               </div>
               <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/30">
-                <p className="text-sm font-semibold text-blue-400 mb-2">Lender View (CVaR)</p>
+                <p className="text-sm font-semibold mb-2" style={{ color: "#2B7BC2" }}>Lender View (CVaR)</p>
                 <p className="text-sm text-slate-300">In the worst {((1-confidence)*100).toFixed(0)}% of scenarios, expected loss is <span className="text-red-400 font-semibold">{fmt(cvar_val)}</span>. DSCR coverage remains adequate.</p>
               </div>
               <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/30">
-                <p className="text-sm font-semibold text-purple-400 mb-2">Development Bank View</p>
-                <p className="text-sm text-slate-300">Portfolio diversification benefit. P5 downside of <span className="text-orange-400 font-semibold">{fmt(computePercentile(npvValues, 0.05))}</span> is manageable within blended finance structure.</p>
+                <p className="text-sm font-semibold mb-2" style={{ color: "#6CB4D9" }}>Development Bank View</p>
+                <p className="text-sm text-slate-300">Portfolio diversification benefit. P5 downside of <span className="font-semibold" style={{ color: "#E8652D" }}>{fmt(computePercentile(npvValues, 0.05))}</span> is manageable within blended finance structure.</p>
               </div>
             </div>
           </div>
