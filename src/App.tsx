@@ -9,6 +9,10 @@ import Predictions from "./pages/Predictions";
 import Geological from "./pages/Geological";
 import Projects from "./pages/Projects";
 import Financing from "./pages/Financing";
+import VOIAnalysis from "./pages/VOIAnalysis";
+import BayesianUpdating from "./pages/BayesianUpdating";
+import ReliabilityAnalysis from "./pages/ReliabilityAnalysis";
+import ReportDownload from "./pages/ReportDownload";
 import Settings from "./pages/Settings";
 import "./App.css";
 
@@ -28,6 +32,10 @@ function App() {
             <Route path="/geological" element={<Geological />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/financing" element={<Financing />} />
+            <Route path="/voi-analysis" element={<VOIAnalysis />} />
+            <Route path="/bayesian" element={<BayesianUpdating />} />
+            <Route path="/reliability" element={<ReliabilityAnalysis />} />
+            <Route path="/reports" element={<ReportDownload />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>

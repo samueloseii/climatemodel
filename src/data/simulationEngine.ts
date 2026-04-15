@@ -97,7 +97,14 @@ export function runSingleSimulation(params: SimulationParams): SimulationResult 
     cumulativeCashFlow += netAnnualCF;
 
     if (cumulativeCashFlow >= 0 && !paybackFound) {
-      paybackYears = year - 1 + (cumulativeCashFlow - netAnnualCF < 0 ? Math.abs(cumulativeCashFlow - netAnnualCF) / netAnnualCF : 0);
+      // Linear interpolation: previous cumulative was negative, current is >= 0
+      // previousCumulative = cumulativeCashFlow - netAnnualCF (value before this year's CF)
+      const previousCumulative = cumulativeCashFlow - netAnnualCF;
+      if (previousCumulative < 0 && netAnnualCF > 0) {
+        paybackYears = (year - 1) + Math.abs(previousCumulative) / netAnnualCF;
+      } else {
+        paybackYears = year;
+      }
       paybackFound = true;
     }
   }
@@ -117,9 +124,21 @@ export function runSingleSimulation(params: SimulationParams): SimulationResult 
 }
 
 function calculateIRR(cashFlows: number[]): number {
+  // Bisection method: find rate r such that NPV(r) = 0
+  // Use tighter tolerance and more iterations for accuracy
   let low = -0.5;
-  let high = 2.0;
-  for (let iter = 0; iter < 100; iter++) {
+  let high = 5.0;
+  
+  // Verify that a root exists in the interval
+  let npvLow = 0, npvHigh = 0;
+  for (let i = 0; i < cashFlows.length; i++) {
+    npvLow += cashFlows[i] / Math.pow(1 + low, i);
+    npvHigh += cashFlows[i] / Math.pow(1 + high, i);
+  }
+  // If both same sign, return boundary
+  if (npvLow * npvHigh > 0) return npvLow > 0 ? high : low;
+
+  for (let iter = 0; iter < 200; iter++) {
     const mid = (low + high) / 2;
     let npvAtMid = 0;
     for (let i = 0; i < cashFlows.length; i++) {
@@ -127,7 +146,7 @@ function calculateIRR(cashFlows: number[]): number {
     }
     if (npvAtMid > 0) low = mid;
     else high = mid;
-    if (Math.abs(npvAtMid) < 0.01) break;
+    if (Math.abs(high - low) < 1e-8) break;
   }
   return (low + high) / 2;
 }
@@ -279,17 +298,39 @@ export function computeExpectedUtility(scenarios: UtilityScenario[], riskAversio
   certaintyEquivalent: number;
   riskPremium: number;
 } {
+  // E[V] = sum_i p_i * NPV_i
   const expectedValue = scenarios.reduce((s, sc) => s + sc.probability * sc.npv, 0);
+  
+  // Exponential utility: U(x) = (1 - exp(-gamma * x / scale)) / gamma
+  // where gamma is risk aversion and scale normalizes to prevent overflow
+  const scale = 1000000;
   const utilities = scenarios.map(sc => ({
     ...sc,
     utility: riskAversion === 0
       ? sc.npv
-      : (1 - Math.exp(-riskAversion * sc.npv / 1000000)) / riskAversion,
+      : (1 - Math.exp(-riskAversion * sc.npv / scale)) / riskAversion,
   }));
+  
+  // E[U] = sum_i p_i * U(NPV_i)
   const expectedUtility = utilities.reduce((s, u) => s + u.probability * u.utility, 0);
-  const certaintyEquivalent = riskAversion === 0
-    ? expectedValue
-    : -Math.log(1 - riskAversion * expectedUtility) * 1000000 / riskAversion;
+  
+  // Certainty Equivalent: CE = U^{-1}(E[U])
+  // For exponential: CE = -ln(1 - gamma * E[U]) * scale / gamma
+  // Guard against domain error: 1 - gamma * EU must be > 0
+  let certaintyEquivalent: number;
+  if (riskAversion === 0) {
+    certaintyEquivalent = expectedValue;
+  } else {
+    const arg = 1 - riskAversion * expectedUtility;
+    if (arg <= 0) {
+      // Utility saturated — CE approaches negative infinity; clamp to large negative
+      certaintyEquivalent = -scale * 10;
+    } else {
+      certaintyEquivalent = -Math.log(arg) * scale / riskAversion;
+    }
+  }
+  
+  // Risk Premium: RP = E[V] - CE (positive means risk-averse)
   const riskPremium = expectedValue - certaintyEquivalent;
 
   return { expectedValue, expectedUtility, certaintyEquivalent, riskPremium };

@@ -10,6 +10,10 @@ import {
   FolderOpen,
   DollarSign,
   Settings,
+  Eye,
+  FlaskConical,
+  Wrench,
+  FileDown,
 } from "lucide-react";
 
 const navItems = [
@@ -18,14 +22,18 @@ const navItems = [
   { to: "/risk-analysis", icon: Shield, label: "Risk Analysis", section: "Analysis" },
   { to: "/expected-utility", icon: Brain, label: "Expected Utility", section: "Analysis" },
   { to: "/decision-theory", icon: Swords, label: "Decision Theory", section: "Analysis" },
+  { to: "/voi-analysis", icon: Eye, label: "Value of Info", section: "Decision Science" },
+  { to: "/bayesian", icon: FlaskConical, label: "Bayesian Updating", section: "Decision Science" },
+  { to: "/reliability", icon: Wrench, label: "Reliability", section: "Decision Science" },
   { to: "/predictions", icon: TrendingUp, label: "Predictions", section: "Forecasting" },
   { to: "/geological", icon: Mountain, label: "Geological", section: "Forecasting" },
   { to: "/projects", icon: FolderOpen, label: "Projects", section: "Management" },
   { to: "/financing", icon: DollarSign, label: "Financing", section: "Management" },
+  { to: "/reports", icon: FileDown, label: "Reports", section: "Management" },
   { to: "/settings", icon: Settings, label: "Settings", section: "Management" },
 ];
 
-const sections = ["Overview", "Analysis", "Forecasting", "Management"];
+const sections = ["Overview", "Analysis", "Decision Science", "Forecasting", "Management"];
 
 export default function Sidebar() {
   return (
