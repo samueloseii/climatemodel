@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { FileDown, Check, Loader2, Building2, TrendingUp, Shield, Brain, Eye, Wrench, FlaskConical } from "lucide-react";
+import { loadProjects, type GeoProject } from "../data/projectStore";
+import { analyzeFinancing, generateProjectInsights } from "../data/aiInsights";
 
 interface ReportConfig {
   projectName: string;
@@ -356,10 +358,68 @@ ${sections.join("\n")}
 </html>`;
 }
 
+function fmtR(v: number): string {
+  if (Math.abs(v) >= 1e9) return "$" + (v / 1e9).toFixed(2) + "B";
+  if (Math.abs(v) >= 1e6) return "$" + (v / 1e6).toFixed(1) + "M";
+  if (Math.abs(v) >= 1e3) return "$" + (v / 1e3).toFixed(0) + "K";
+  return "$" + v.toFixed(0);
+}
+
+function generateProjectDataSection(p: GeoProject): string {
+  const fa = analyzeFinancing(p.capex, p.annualRevenue, p.opexPerYear, p.capacity_MW, p.discountRate, p.projectLife, p.energyEscalation, p.carbonCreditsPerYear, p.riskScore, p.drillingSuccessProb);
+  const ins = generateProjectInsights(p.capex, p.annualRevenue, p.opexPerYear, p.capacity_MW, p.discountRate, p.projectLife, p.thermalGradient, p.reservoirTemp, p.drillingSuccessProb, p.riskScore, p.npv, p.irr, p.paybackYears);
+  return `
+    <div class="section">
+      <h2>Project-Specific Financial Analysis</h2>
+      <div class="highlight-box">
+        <h3>Viability Assessment: ${fa.isViable ? "VIABLE — Recommended for Investment" : "CAUTION — Below Threshold"}</h3>
+        <p>${fa.viabilityReason}</p>
+      </div>
+      <table>
+        <tr><th>Metric</th><th>Value</th><th>Assessment</th></tr>
+        <tr><td>Total CapEx</td><td>${fmtR(p.capex)}</td><td>-</td></tr>
+        <tr><td>Annual Revenue</td><td>${fmtR(p.annualRevenue)}</td><td>-</td></tr>
+        <tr><td>NPV</td><td>${fmtR(p.npv)}</td><td style="color:${p.npv >= 0 ? '#10b981' : '#ef4444'}">${p.npv >= 0 ? 'Positive' : 'Negative'}</td></tr>
+        <tr><td>Project IRR</td><td>${fa.projectIRR.toFixed(1)}%</td><td style="color:${fa.projectIRR > p.discountRate ? '#10b981' : '#ef4444'}">${fa.projectIRR > p.discountRate ? 'Above' : 'Below'} ${p.discountRate}% hurdle</td></tr>
+        <tr><td>Equity IRR (Best Structure)</td><td>${fa.equityIRR.toFixed(1)}%</td><td>${fa.recommended}</td></tr>
+        <tr><td>LCOE</td><td>$${fa.lcoe.toFixed(2)}/MWh</td><td>${fa.lcoe < 80 ? 'Competitive' : 'Above market'}</td></tr>
+        <tr><td>DSCR</td><td>${fa.dscr.toFixed(2)}x</td><td style="color:${fa.dscr >= 1.3 ? '#10b981' : '#f59e0b'}">${fa.dscr >= 1.3 ? 'Healthy' : fa.dscr >= 1.1 ? 'Tight' : 'Below minimum'}</td></tr>
+        <tr><td>ROI</td><td>${fa.roiPercent.toFixed(0)}%</td><td>-</td></tr>
+        <tr><td>Payback Period</td><td>${fa.paybackYears} years</td><td>${fa.paybackYears <= 10 ? 'Strong' : 'Extended'}</td></tr>
+        <tr><td>Risk Score</td><td>${p.riskScore}/100</td><td>${p.riskScore >= 70 ? 'Low Risk' : p.riskScore >= 50 ? 'Moderate Risk' : 'High Risk'}</td></tr>
+        <tr><td>Drilling Success Prob.</td><td>${(p.drillingSuccessProb * 100).toFixed(0)}%</td><td>${p.drillingSuccessProb >= 0.7 ? 'Favorable' : 'Elevated risk'}</td></tr>
+      </table>
+      <h3>Recommended Financing Structure</h3>
+      <p>Based on the project's risk profile and cash flow characteristics, the recommended financing structure is <strong>${fa.recommended}</strong>.</p>
+      <table>
+        <tr><th>Structure</th><th>Suitability</th><th>Interest Rate</th><th>Leverage</th><th>Tenor</th></tr>
+        ${fa.options.slice(0, 5).map(o => `<tr><td>${o.name}</td><td>${o.suitability}/100</td><td>${o.interestRate > 0 ? o.interestRate + '%' : 'N/A'}</td><td>${(o.debtRatio * 100).toFixed(0)}%</td><td>${o.tenorYears > 0 ? o.tenorYears + ' yr' : 'N/A'}</td></tr>`).join('')}
+      </table>
+      <h3>AI-Generated Insights</h3>
+      <ul>
+        ${ins.map(i => `<li><strong>[${i.type.toUpperCase()} — ${i.confidence}% confidence]</strong> ${i.title}: ${i.detail}</li>`).join('')}
+      </ul>
+    </div>
+  `;
+}
+
 export default function ReportDownload() {
+  const projects = useMemo(() => loadProjects(), []);
+  const [selectedProjectId, setSelectedProjectId] = useState(projects[0]?.id || "");
   const [config, setConfig] = useState<ReportConfig>(defaultConfig);
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
+
+  const selectedProject = projects.find(p => p.id === selectedProjectId) || projects[0];
+
+  // Auto-fill project details when selection changes
+  const handleProjectChange = (id: string) => {
+    setSelectedProjectId(id);
+    const p = projects.find(pr => pr.id === id);
+    if (p) {
+      setConfig(prev => ({ ...prev, projectName: p.name, projectLocation: p.location + ", " + p.country }));
+    }
+  };
 
   const updateConfig = (field: keyof ReportConfig, value: string | boolean) => {
     setConfig(prev => ({ ...prev, [field]: value }));
@@ -376,7 +436,12 @@ export default function ReportDownload() {
   const generateReport = () => {
     setGenerating(true);
     setTimeout(() => {
-      const html = generateReportHTML(config);
+      let html = generateReportHTML(config);
+      // Inject project-specific analysis before disclaimer
+      if (selectedProject) {
+        const projSection = generateProjectDataSection(selectedProject);
+        html = html.replace('<div class="disclaimer">', projSection + '\n<div class="disclaimer">');
+      }
       const blob = new Blob([html], { type: "text/html" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -433,6 +498,12 @@ export default function ReportDownload() {
       <div className="glass-card p-5">
         <h3 className="text-sm font-semibold text-white mb-3">Project Details</h3>
         <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2">
+            <label className="text-xs text-slate-400 block mb-1">Select Project</label>
+            <select className="select-dark w-full text-sm py-2" value={selectedProjectId} onChange={e => handleProjectChange(e.target.value)}>
+              {projects.map(p => <option key={p.id} value={p.id}>{p.name} ({p.country}) — NPV: {fmtR(p.npv)}, IRR: {p.irr.toFixed(1)}%</option>)}
+            </select>
+          </div>
           <div>
             <label className="text-xs text-slate-400 block mb-1">Project Name</label>
             <input value={config.projectName} onChange={e => updateConfig("projectName", e.target.value)} className="input-dark w-full text-sm py-2" />

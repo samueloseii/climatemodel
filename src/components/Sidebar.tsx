@@ -17,6 +17,7 @@ import {
   Layers,
   CreditCard,
   Sliders,
+  PlusCircle,
 } from "lucide-react";
 
 const navItems = [
@@ -33,6 +34,7 @@ const navItems = [
   { to: "/predictions", icon: TrendingUp, label: "Predictions", section: "Forecasting" },
   { to: "/geological", icon: Mountain, label: "Geological", section: "Forecasting" },
   { to: "/projects", icon: FolderOpen, label: "Projects", section: "Management" },
+  { to: "/create-project", icon: PlusCircle, label: "Create Project", section: "Management" },
   { to: "/financing", icon: DollarSign, label: "Financing", section: "Management" },
   { to: "/reports", icon: FileDown, label: "Reports", section: "Management" },
   { to: "/settings", icon: Settings, label: "Settings", section: "Management" },
@@ -80,7 +82,7 @@ export default function Sidebar() {
       <div className="p-3 mt-auto">
         <div className="rounded-lg p-3" style={{ background: "rgba(43,123,194,0.06)", border: "1px solid rgba(43,123,194,0.15)" }}>
           <p className="text-xs font-medium mb-0.5" style={{ color: "#E8652D" }}>Analytics Engine</p>
-          <p className="text-xs text-slate-500 leading-relaxed">v3.0 &middot; 16 modules active</p>
+          <p className="text-xs text-slate-500 leading-relaxed">v4.0 &middot; 18 modules active</p>
         </div>
       </div>
     </aside>

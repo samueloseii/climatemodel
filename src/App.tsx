@@ -17,6 +17,7 @@ import Settings from "./pages/Settings";
 import Subscription from "./pages/Subscription";
 import PortfolioCompare from "./pages/PortfolioCompare";
 import SensitivityAnalysis from "./pages/SensitivityAnalysis";
+import CreateProject from "./pages/CreateProject";
 import "./App.css";
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
             <Route path="/subscription" element={<Subscription />} />
             <Route path="/portfolio" element={<PortfolioCompare />} />
             <Route path="/sensitivity" element={<SensitivityAnalysis />} />
+            <Route path="/create-project" element={<CreateProject />} />
           </Routes>
         </main>
       </div>
