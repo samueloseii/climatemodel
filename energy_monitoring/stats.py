@@ -221,9 +221,14 @@ def process_3phase_month(df: pd.DataFrame, year: int, month: int) -> dict:
         stats[f"total_energy_gen_ph{ph}"] = calc_total_energy(df[gc], sample_interval)
     stats["total_energy_gen_total"] = calc_total_energy(gen_total_power, sample_interval)
 
-    # Frequency
+    # Frequency (column may be "Freq" or "frequency" depending on data version)
+    freq_col = None
     if "Freq" in df.columns:
-        fs = calc_stats(df["Freq"])
+        freq_col = "Freq"
+    elif "frequency" in df.columns:
+        freq_col = "frequency"
+    if freq_col is not None:
+        fs = calc_stats(df[freq_col])
         stats["frequency_mean"] = fs.mean
         stats["frequency_min"] = fs.min
         stats["frequency_max"] = fs.max

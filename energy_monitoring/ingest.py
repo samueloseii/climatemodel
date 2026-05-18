@@ -78,6 +78,11 @@ def ingest_raw_readings_3phase(session: Session, site: Site, df: pd.DataFrame,
         "GenPb": "gen_ph2",
         "GenPc": "gen_ph3",
         "Freq": "frequency",
+        "frequency": "frequency",
+        "Va": "voltage_ph1",
+        "Vb": "voltage_ph2",
+        "Vc": "voltage_ph3",
+        "batt": "battery_voltage",
     }
 
     records = []
@@ -87,7 +92,8 @@ def ingest_raw_readings_3phase(session: Session, site: Site, df: pd.DataFrame,
         for src_col, dst_col in col_map.items():
             if src_col in df.columns:
                 val = row[src_col]
-                record[dst_col] = float(val) if pd.notna(val) else None
+                if pd.notna(val):
+                    record[dst_col] = float(val)
 
         # Compute totals if not already present
         con_cols = ["ConPa", "ConPb", "ConPc"]
@@ -104,6 +110,13 @@ def ingest_raw_readings_3phase(session: Session, site: Site, df: pd.DataFrame,
         elif all(c in df.columns for c in gen_cols):
             vals = [float(row[c]) for c in gen_cols if pd.notna(row[c])]
             record["gen_total"] = float(sum(vals)) if vals else None
+
+        # Average voltage across phases
+        if "Va" in df.columns:
+            v_vals = [float(row[c]) for c in ["Va", "Vb", "Vc"]
+                      if c in df.columns and pd.notna(row[c])]
+            if v_vals:
+                record["voltage"] = sum(v_vals) / len(v_vals)
 
         records.append(record)
 
@@ -122,7 +135,18 @@ def _insert_batch(engine, records: list[dict]):
     if not records:
         return
 
-    columns = sorted(records[0].keys())
+    # Collect all columns across all records in this batch
+    all_columns = set()
+    for r in records:
+        all_columns.update(r.keys())
+    columns = sorted(all_columns)
+
+    # Ensure every record has every column (None for missing)
+    for r in records:
+        for c in columns:
+            if c not in r:
+                r[c] = None
+
     col_str = ", ".join(columns)
     val_placeholders = ", ".join(f":{c}" for c in columns)
 
