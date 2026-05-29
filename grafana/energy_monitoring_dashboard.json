@@ -1,0 +1,90 @@
+{
+  "dashboard": {
+    "title": "Energy Monitoring — Buayan",
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Total Generation (kWh)",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+        "targets": [{
+          "rawSql": "SELECT SUM(gen_total)/1000.0/60.0 AS value FROM raw_readings WHERE site_id=2 AND $__timeFilter(time)",
+          "format": "table"
+        }],
+        "fieldConfig": { "defaults": { "unit": "kwatth", "color": { "mode": "fixed", "fixedColor": "green" } } }
+      },
+      {
+        "title": "Total Consumption (kWh)",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+        "targets": [{
+          "rawSql": "SELECT SUM(con_total)/1000.0/60.0 AS value FROM raw_readings WHERE site_id=2 AND $__timeFilter(time)",
+          "format": "table"
+        }],
+        "fieldConfig": { "defaults": { "unit": "kwatth", "color": { "mode": "fixed", "fixedColor": "orange" } } }
+      },
+      {
+        "title": "Data Points",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+        "targets": [{
+          "rawSql": "SELECT COUNT(*) AS value FROM raw_readings WHERE site_id=2 AND $__timeFilter(time)",
+          "format": "table"
+        }]
+      },
+      {
+        "title": "CO₂ Avoided (kg)",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+        "targets": [{
+          "rawSql": "SELECT SUM(gen_total)/1000.0/60.0*0.7611 AS value FROM raw_readings WHERE site_id=2 AND $__timeFilter(time)",
+          "format": "table"
+        }],
+        "fieldConfig": { "defaults": { "unit": "massg", "color": { "mode": "fixed", "fixedColor": "blue" } } }
+      },
+      {
+        "title": "Daily Energy",
+        "type": "barchart",
+        "gridPos": { "h": 10, "w": 12, "x": 0, "y": 4 },
+        "targets": [{
+          "rawSql": "SELECT time_bucket('1 day', time) AS time, SUM(gen_total)/1000.0/60.0 AS \"Generation\", SUM(con_total)/1000.0/60.0 AS \"Consumption\" FROM raw_readings WHERE site_id=2 AND $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "format": "table"
+        }],
+        "fieldConfig": {
+          "overrides": [
+            { "matcher": { "id": "byName", "options": "Generation" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+            { "matcher": { "id": "byName", "options": "Consumption" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }
+          ]
+        }
+      },
+      {
+        "title": "Hourly Power Profile",
+        "type": "timeseries",
+        "gridPos": { "h": 10, "w": 12, "x": 12, "y": 4 },
+        "targets": [{
+          "rawSql": "SELECT bucket AS time, avg_gen_total/1000.0 AS \"Generation (kW)\", avg_con_total/1000.0 AS \"Consumption (kW)\" FROM readings_hourly WHERE site_id=2 AND $__timeFilter(bucket) ORDER BY bucket",
+          "format": "table"
+        }],
+        "fieldConfig": {
+          "defaults": { "custom": { "fillOpacity": 20, "lineWidth": 2 } },
+          "overrides": [
+            { "matcher": { "id": "byName", "options": "Generation (kW)" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+            { "matcher": { "id": "byName", "options": "Consumption (kW)" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }
+          ]
+        }
+      },
+      {
+        "title": "Monthly Stats",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+        "targets": [{
+          "rawSql": "SELECT year||'-'||LPAD(month::text,2,'0') AS \"Month\", ROUND(total_energy_gen_total::numeric,1) AS \"Total Gen (kWh)\", ROUND(total_energy_con_total::numeric,1) AS \"Total Con (kWh)\", ROUND(daily_energy_gen_total_mean::numeric,1) AS \"Avg Daily Gen\", ROUND(daily_energy_con_total_mean::numeric,1) AS \"Avg Daily Con\", total_records AS \"Records\", ROUND(estimated_consumer_downtime_hours::numeric,1) AS \"Downtime (hrs)\" FROM mu3pep_month_stats WHERE site_id=2 ORDER BY year,month",
+          "format": "table"
+        }]
+      }
+    ],
+    "time": { "from": "2025-11-01T00:00:00Z", "to": "2026-02-28T23:59:59Z" },
+    "templating": { "list": [] },
+    "schemaVersion": 39
+  }
+}
